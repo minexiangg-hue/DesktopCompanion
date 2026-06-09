@@ -1,0 +1,8 @@
+{
+  "wakeUp": "08:00",
+  "sleepTime": "22:00",
+  "dailyChatLimit": 20,
+  "activeFrequency": "normal",
+  "avataraEnabled": false,
+  "theme": "light"
+}

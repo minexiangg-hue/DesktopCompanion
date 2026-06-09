@@ -1,3 +1,4 @@
 node_modules/
-data/
+data/push-history.json
+data/content-cache.json
 *.log
