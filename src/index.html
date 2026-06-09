@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>DesktopCompanion</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body data-sleep-state="awake" data-personality="tsundere-cat">
+  <!-- 角色容器 -->
+  <div id="character-container">
+    <object id="character-svg" type="image/svg+xml" data="assets/character/character.svg"
+      width="140" height="168" style="pointer-events: none;">
+    </object>
+    <!-- 语音气泡 -->
+    <div id="speech-bubble" class="speech-bubble"></div>
+  </div>
+
+  <!-- 惊喜面板 -->
+  <div id="surprise-panel" class="surprise-panel"></div>
+
+  <!-- 聊天面板 -->
+  <div id="chat-panel" class="chat-panel">
+    <div class="chat-header">
+      <span id="chat-partner">宠物</span>
+      <button id="chat-close" title="关闭 (ESC)">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="说点什么…" maxlength="200">
+    </div>
+  </div>
+
+  <!-- 人格选择器 -->
+  <div id="personality-picker" class="personality-picker"></div>
+
+  <!-- 设置面板 -->
+  <div id="settings-panel" class="settings-panel"></div>
+
+  <script src="js/character-renderer.js"></script>
+  <script src="js/renderer.js"></script>
+</body>
+</html>

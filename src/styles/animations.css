@@ -1,0 +1,399 @@
+/* ============================================================
+   Mochi Character Animations
+   DesktopCompanion Project
+   ============================================================
+   All animations use GPU-accelerated properties (transform, opacity)
+   and avoid layout-triggering properties.
+   ============================================================ */
+
+/* ===================== 1. BREATHING (Idle) =====================
+   4s cycle -- gentle body scale for the "alive" feel
+   Applied to: .character-body
+   Used with:  .state-idle
+   ------------------------------------------------------------ */
+@keyframes breathing {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.015) translateY(-1px); }
+  50%  { transform: scale(1.02) translateY(-2px); }
+  75%  { transform: scale(1.015) translateY(-1px); }
+  100% { transform: scale(1); }
+}
+
+.state-idle .character-body {
+  transform-origin: center bottom;
+  animation: breathing 4s ease-in-out infinite;
+}
+
+
+/* ===================== 2. BLINK =====================
+   200ms fast eyelid closure on a ~4s repeating interval
+   Applied to: .eyelid-l, .eyelid-r
+   NOTE: The blink uses the eyelid overlay -- slides down and back up.
+   The fixed interval creates a predictable blink rhythm; JS can
+   randomize delays if desired.
+   ------------------------------------------------------------ */
+@keyframes blinkAction {
+  0%, 93%, 100% { transform: translate(0, -80px); }
+  96%           { transform: translate(0, -2px); }
+  98%           { transform: translate(0, -80px); }
+}
+
+.state-idle .eyelid-l,
+.state-idle .eyelid-r {
+  animation: blinkAction 4s ease-in-out infinite;
+}
+
+
+/* ===================== 3. WAKE UP =====================
+   1.5s one-shot transition from sleep to awake
+   Applied to the whole character root via .state-wake-up
+   Stages:
+     - 0-25%:  gentle stretch, head tilt
+     - 25-50%: eyes open (blink-like), slight body shift
+     - 50-75%: orient, blink again
+     - 75-100%: settle to idle
+   ------------------------------------------------------------ */
+@keyframes wakeUp {
+  0%   { transform: scale(1); }
+  15%  { transform: scale(1.02) rotate(-1.5deg); }
+  30%  { transform: scale(1.04) rotate(0deg); }
+  45%  { transform: scale(1.02) rotate(1deg); }
+  60%  { transform: scale(1.01) rotate(0deg); }
+  75%  { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes wakeUpBlink {
+  0%, 18%, 35%, 55%, 100% { transform: translate(0, -80px); }
+  20%, 33%                 { transform: translate(0, -2px); }
+  37%, 53%                 { transform: translate(0, -2px); }
+}
+
+.state-wake-up {
+  transform-origin: center bottom;
+  animation: wakeUp 1.5s ease-out forwards;
+}
+
+.state-wake-up .eyelid-l,
+.state-wake-up .eyelid-r {
+  animation: wakeUpBlink 1.5s ease-in-out forwards;
+}
+
+.state-wake-up .eyes-closed {
+  animation: fadeOut 0.6s ease-in forwards;
+}
+
+.state-wake-up .effect-zzz {
+  animation: fadeOut 0.4s ease-in forwards;
+}
+
+
+/* ===================== 4. TALKING =====================
+   Mouth alternates between closed (smile) and open (oval)
+   at ~300ms intervals, creating a natural speech rhythm.
+   Applied via .state-talking to switch between emotion mouth
+   and the dedicated talking mouth group.
+   ------------------------------------------------------------ */
+.state-talking .mouth-pos {
+  opacity: 0;
+}
+
+.state-talking .mouth-talk {
+  opacity: 1;
+}
+
+@keyframes talkCycle {
+  0%, 38%, 100% { opacity: 1; }
+  42%, 96%      { opacity: 0; }
+}
+
+@keyframes talkCycleOpen {
+  0%, 38%, 100% { opacity: 0; }
+  42%, 96%      { opacity: 1; }
+}
+
+.state-talking .talk-closed {
+  transform-origin: center center;
+  animation: talkCycle 0.3s ease-in-out infinite;
+}
+
+.state-talking .talk-open {
+  transform-origin: center center;
+  animation: talkCycleOpen 0.3s ease-in-out infinite;
+}
+
+
+/* ===================== 5. FALL ASLEEP =====================
+   3s one-shot transition from awake to asleep.
+   Stages:
+     - 0-15%:  yawn (mouth opens wide)
+     - 15-30%: eyes get heavy (eyelids halfway)
+     - 30-50%: eyes fully close, body relaxes
+     - 50-70%: settled into sleep pose
+     - 70-100%: ZZZ fades in, breathing slows
+   ------------------------------------------------------------ */
+@keyframes fallAsleepYawn {
+  0%   { transform: scale(1); }
+  8%   { transform: scale(1.01); }
+  15%  { transform: scale(1.015); }
+  20%  { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fallAsleepMouth {
+  0%   { opacity: 0; }
+  8%   { opacity: 0; }
+  12%  { opacity: 1; }   /* yawn appears */
+  18%  { opacity: 1; }
+  22%  { opacity: 0; }   /* yawn fades */
+  100% { opacity: 0; }
+}
+
+@keyframes fallAsleepEyelids {
+  0%   { transform: translate(0, -80px); }  /* fully open */
+  25%  { transform: translate(0, -16px); }  /* half closed */
+  40%  { transform: translate(0, -2px); }   /* almost closed */
+  55%  { transform: translate(0, 0); }      /* fully closed */
+  100% { transform: translate(0, 0); }      /* stay closed */
+}
+
+@keyframes fallAsleepClosedEyes {
+  0%   { opacity: 0; }
+  45%  { opacity: 0; }
+  55%  { opacity: 1; }   /* ^_^ eyes appear after close */
+  100% { opacity: 1; }
+}
+
+@keyframes fallAsleepZZZ {
+  0%   { opacity: 0; transform: translate(0, 10px); }
+  70%  { opacity: 0; transform: translate(0, 10px); }
+  85%  { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 1; transform: translate(0, 0); }
+}
+
+.state-fall-asleep .character-body {
+  transform-origin: center bottom;
+  animation: fallAsleepYawn 3s ease-in-out forwards;
+}
+
+/* Show a wide yawn mouth during the yawn phase */
+.state-fall-asleep .mouth-happy,
+.state-fall-asleep .mouth-sad,
+.state-fall-asleep .mouth-sleepy,
+.state-fall-asleep .mouth-tsundere,
+.state-fall-asleep .mouth-deadpan {
+  opacity: 0;
+}
+
+.state-fall-asleep .mouth-surprised {
+  animation: fallAsleepMouth 3s ease-in-out forwards;
+  opacity: 0;
+}
+
+.state-fall-asleep .mouth-panic {
+  opacity: 0;
+}
+
+.state-fall-asleep .eyelid-l,
+.state-fall-asleep .eyelid-r {
+  animation: fallAsleepEyelids 3s ease-in-out forwards;
+}
+
+.state-fall-asleep .eyes-closed {
+  animation: fallAsleepClosedEyes 3s ease-in-out forwards;
+}
+
+.state-fall-asleep .effect-zzz {
+  animation: fallAsleepZZZ 3s ease-in-out forwards;
+}
+
+.state-fall-asleep .iris-group {
+  animation: fadeOut 0.4s ease-in 0.8s forwards;
+}
+
+
+/* ===================== 6. SLEEPING =====================
+   Slower, deeper breathing than idle (6s cycle).
+   ZZZ letters float upward continuously.
+   Applied via .state-sleeping.
+   ------------------------------------------------------------ */
+@keyframes sleepingBreath {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.015) translateY(-1.5px); }
+  100% { transform: scale(1); }
+}
+
+.state-sleeping .character-body {
+  transform-origin: center bottom;
+  animation: sleepingBreath 6s ease-in-out infinite;
+}
+
+.state-sleeping .eyelid-l,
+.state-sleeping .eyelid-r {
+  transform: translate(0, 0);  /* keep eyes fully closed */
+}
+
+.state-sleeping .eyes-closed {
+  opacity: 1;
+}
+
+.state-sleeping .mouth-pos > * {
+  opacity: 0;
+}
+
+.state-sleeping .mouth-sleepy {
+  opacity: 1 !important;
+}
+
+.state-sleeping .effect-zzz {
+  opacity: 1;
+}
+
+.state-sleeping .iris-group {
+  opacity: 0;
+}
+
+
+/* ===================== 7. ZZZ FLOAT =====================
+   Continuous upward float for sleeping Zs.
+   Each Z has a staggered delay for a cascading effect.
+   ------------------------------------------------------------ */
+@keyframes zzzFloat1 {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  15%  { opacity: 0.9; }
+  75%  { opacity: 0.7; }
+  100% { transform: translate(6px, -38px); opacity: 0; }
+}
+
+@keyframes zzzFloat2 {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  15%  { opacity: 0.6; }
+  75%  { opacity: 0.4; }
+  100% { transform: translate(4px, -30px); opacity: 0; }
+}
+
+@keyframes zzzFloat3 {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  15%  { opacity: 0.35; }
+  75%  { opacity: 0.2; }
+  100% { transform: translate(2px, -24px); opacity: 0; }
+}
+
+.state-sleeping .zzz-1 {
+  transform-origin: center center;
+  animation: zzzFloat1 4s ease-out 0s infinite;
+}
+
+.state-sleeping .zzz-2 {
+  transform-origin: center center;
+  animation: zzzFloat2 4s ease-out 0.8s infinite;
+}
+
+.state-sleeping .zzz-3 {
+  transform-origin: center center;
+  animation: zzzFloat3 4s ease-out 1.6s infinite;
+}
+
+
+/* ===================== 8. SHAKE (Panic) =====================
+   Rapid horizontal vibration for the panic emotion.
+   Applied to the whole character root.
+   ------------------------------------------------------------ */
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  5%   { transform: translateX(-5px) rotate(-0.5deg); }
+  10%  { transform: translateX(5px) rotate(0.5deg); }
+  15%  { transform: translateX(-4px) rotate(-0.3deg); }
+  20%  { transform: translateX(4px) rotate(0.3deg); }
+  25%  { transform: translateX(-3px); }
+  30%  { transform: translateX(3px); }
+  35%  { transform: translateX(-2px); }
+  40%  { transform: translateX(2px); }
+  45%  { transform: translateX(-1px); }
+  50%  { transform: translateX(1px); }
+  55%  { transform: translateX(0); }
+  60%  { transform: translateX(-1px); }
+  65%  { transform: translateX(1px); }
+  70%  { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+
+.state-shake {
+  transform-origin: center bottom;
+  animation: shake 1.2s ease-in-out infinite;
+}
+
+
+/* ===================== 9. BOUNCE (Greeting) =====================
+   Happy vertical bounce for greetings or excitement.
+   Applied to the whole character root.
+   ------------------------------------------------------------ */
+@keyframes bounce {
+  0%   { transform: translateY(0) scale(1, 1); }
+  15%  { transform: translateY(-14px) scale(1.02, 0.98); }
+  25%  { transform: translateY(-6px) scale(0.98, 1.02); }
+  35%  { transform: translateY(-10px) scale(1.01, 0.99); }
+  45%  { transform: translateY(-3px) scale(0.99, 1.01); }
+  55%  { transform: translateY(-6px) scale(1.01, 0.99); }
+  65%  { transform: translateY(-1px); }
+  80%  { transform: translateY(-2px); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+.state-bounce {
+  transform-origin: center bottom;
+  animation: bounce 0.8s ease-in-out;
+}
+
+
+/* ===================== UTILITY ANIMATIONS ===================== */
+
+/* Simple cross-fade helper */
+@keyframes fadeOut {
+  0%   { opacity: var(--fade-from, 1); }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: var(--fade-to, 1); }
+}
+
+
+/* ===================== EMOTION STATE TRANSITIONS ===================== */
+
+/* When switching emotions, provide a subtle micro-transition */
+.character-root {
+  transition: transform 0.3s ease;
+}
+
+/* Combined state: bouncing while happy */
+.state-bounce[data-emotion="happy"] .blush {
+  animation: blushPulse 0.8s ease-in-out;
+}
+
+@keyframes blushPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.7; }
+}
+
+/* Combined state: shaking while panicked adds sweat drop wobble */
+.state-shake .sweat-drop {
+  animation: sweatWobble 1.2s ease-in-out infinite;
+}
+
+@keyframes sweatWobble {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(2px, -3px); }
+}
+
+
+/* ===================== RESPONSIVE SCALING ===================== */
+
+/* Allow the character to scale with its container while maintaining aspect ratio */
+.character-root {
+  width: 100%;
+  height: auto;
+  max-width: 200px;
+  display: block;
+}

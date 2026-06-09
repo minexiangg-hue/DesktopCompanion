@@ -1,0 +1,338 @@
+/**
+ * components.css — UI 组件样式
+ *
+ * 包含：聊天关闭按钮、状态指示器、设置面板开关等小组件
+ */
+
+/* ============================================================ */
+/* 聊天关闭 & 控制按钮
+/* ============================================================ */
+
+#chat-close, .picker-close, .settings-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #9CA3AF;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+#chat-close:hover, .picker-close:hover, .settings-close:hover {
+  background: #F3F0EB;
+  color: #4A3728;
+}
+
+/* ============================================================ */
+/* 状态指示器 — 角色脚下的状态灯
+/* ============================================================ */
+
+#status-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid #FDF8F3;
+  transition: all 0.5s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+body[data-sleep-state="awake"] #status-indicator {
+  background: #4ADE80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
+
+body[data-sleep-state="asleep"] #status-indicator {
+  background: #9CA3AF;
+  box-shadow: 0 0 4px rgba(156, 163, 175, 0.3);
+}
+
+body[data-sleep-state="drowsy"] #status-indicator {
+  background: #FBBF24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+}
+
+/* ============================================================ */
+/* 聊天面板输入区域
+/* ============================================================ */
+
+.chat-input-area {
+  display: flex;
+  padding: 8px 12px 10px;
+  gap: 6px;
+  border-top: 1px solid #F0E8DC;
+  background: #FDF8F3;
+  border-radius: 0 0 16px 16px;
+}
+
+#chat-input {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 20px;
+  font-size: 12px;
+  outline: none;
+  background: white;
+  color: #4A3728;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+#chat-input::placeholder {
+  color: #D1D5DB;
+}
+
+#chat-input:focus {
+  border-color: #E8D5F5;
+  box-shadow: 0 0 0 2px rgba(232, 213, 245, 0.2);
+}
+
+/* ============================================================ */
+/* 人格选择器网格
+/* ============================================================ */
+
+.personality-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 16px 14px;
+}
+
+.picker-header {
+  font-size: 15px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F0E8DC;
+}
+
+.personality-card {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  border: 1.5px solid #F0E8DC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 4px solid var(--accent, #E8D5F5);
+}
+
+.personality-card:hover {
+  background: #F5F0FF;
+  border-color: #E8D5F5;
+  transform: translateX(2px);
+}
+
+.personality-card.active {
+  background: #F5F0FF;
+  border-color: #E8D5F5;
+  border-left-width: 6px;
+}
+
+.personality-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #4A3728;
+}
+
+.personality-tags {
+  font-size: 10px;
+  color: #9CA3AF;
+  margin-top: 2px;
+}
+
+/* ============================================================ */
+/* 惊喜面板
+/* ============================================================ */
+
+.surprise-panel {
+  padding: 14px 16px 12px;
+}
+
+.personality-tag {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.surprise-text {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.surprise-feedback {
+  padding-top: 8px;
+  border-top: 1px solid #F3F0EB;
+  margin-top: 8px;
+}
+
+.fb-btn {
+  padding: 4px 14px;
+  font-size: 15px;
+  border-radius: 16px;
+  border: 1.5px solid #E5E7EB;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+
+.fb-btn:hover {
+  transform: scale(1.1);
+}
+
+.fb-like:hover {
+  border-color: #FFB5B5;
+  background: #FFF5F5;
+}
+
+.fb-dislike:hover {
+  border-color: #B8C5D6;
+  background: #F9FAFB;
+}
+
+.fb-btn.active {
+  transform: scale(1.15);
+}
+
+.fb-like.active {
+  border-color: #FF8A8A;
+  background: #FFE8E8;
+}
+
+.fb-dislike.active {
+  border-color: #9CA3AF;
+  background: #F3F4F6;
+}
+
+/* ============================================================ */
+/* 设置面板
+/* ============================================================ */
+
+.settings-panel {
+  padding: 16px 14px;
+}
+
+.settings-body {
+  gap: 12px;
+}
+
+.settings-body label {
+  padding: 4px 0;
+}
+
+.settings-body input[type="time"],
+.settings-body input[type="number"],
+.settings-body select {
+  background: #FAFAFA;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #4A3728;
+  font-family: inherit;
+  min-width: 90px;
+  text-align: center;
+}
+
+.settings-body input:focus,
+.settings-body select:focus {
+  border-color: #E8D5F5;
+  background: white;
+  outline: none;
+}
+
+.settings-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #F0E8DC;
+}
+
+/* ============================================================ */
+/* 通用工具类
+/* ============================================================ */
+
+.hidden { display: none !important; }
+
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ============================================================ */
+/* 角色情绪指示器（在角色头顶的微表情）
+/* ============================================================ */
+
+.emotion-indicator {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  font-size: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 15;
+}
+
+.emotion-indicator.visible {
+  opacity: 1;
+}
+
+/* ============================================================ */
+/* 通知小红点
+/* ============================================================ */
+
+.notification-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: #FF6B9D;
+  border-radius: 50%;
+  border: 1px solid white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.notification-dot.visible {
+  opacity: 1;
+}
+
+/* ============================================================ */
+/* 响应式调整
+/* ============================================================ */
+
+/* 窗口缩小时 */
+@media (max-width: 200px), (max-height: 240px) {
+  .surprise-panel {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+
+  .speech-bubble {
+    font-size: 10px;
+    padding: 4px 10px;
+    max-width: 140px;
+  }
+
+  .chat-message {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  #chat-input {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+}

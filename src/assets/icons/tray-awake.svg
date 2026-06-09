@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Awake tray icon: cute smiling face -->
+  <!-- Cream circular face -->
+  <circle cx="8" cy="8" r="7" fill="#FFF8F0"/>
+  <circle cx="8" cy="8" r="7" fill="none" stroke="#E8DDD0" stroke-width="0.5"/>
+
+  <!-- Eyes (two solid dots, Chiikawa style) -->
+  <circle cx="5.5" cy="6.5" r="1.6" fill="#5C4033"/>
+  <circle cx="10.5" cy="6.5" r="1.6" fill="#5C4033"/>
+
+  <!-- Eye highlights -->
+  <circle cx="5" cy="6" r="0.5" fill="#FFFFFF"/>
+  <circle cx="10" cy="6" r="0.5" fill="#FFFFFF"/>
+
+  <!-- Smile -->
+  <path d="M 5.5 9.5 Q 8 11.2 10.5 9.5" fill="none" stroke="#8B7355" stroke-width="0.8" stroke-linecap="round"/>
+
+  <!-- Blush -->
+  <circle cx="3.8" cy="8.5" r="1.2" fill="#FFB5B5" opacity="0.45"/>
+  <circle cx="12.2" cy="8.5" r="1.2" fill="#FFB5B5" opacity="0.45"/>
+</svg>
