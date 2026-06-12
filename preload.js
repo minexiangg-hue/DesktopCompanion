@@ -11,6 +11,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // ========== 窗口控制 ==========
+
+  /** 切换窗口穿透模式（true=点穿到桌面，false=正常交互） */
+  setClickThrough: (ignore) => ipcRenderer.send('window:setClickThrough', ignore),
+
   // ========== 人格系统 ==========
 
   /** 返回所有人格列表（含元数据） */

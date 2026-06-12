@@ -70,12 +70,17 @@ function createWindow() {
     },
   });
 
-  mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
-  // 拖拽区域切换（角色区域可拖拽，穿透区域可点击）
-  mainWindow.on('blur', () => {
-    // 失焦时保持置顶
+  // 默认不穿透点击（让用户可以点击角色）
+  // 渲染进程通过 IPC 请求切换穿透模式时再调 setIgnoreMouseEvents
+  mainWindow.setIgnoreMouseEvents(false);
+
+  // IPC handler: 切换窗口穿透模式
+  ipcMain.on('window:setClickThrough', (_event, ignore) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setIgnoreMouseEvents(ignore, { forward: true });
+    }
   });
 
   // 防止关闭时退出（隐藏到托盘）
