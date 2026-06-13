@@ -336,3 +336,92 @@ body[data-sleep-state="drowsy"] #status-indicator {
     padding: 6px 10px;
   }
 }
+
+/* ============================================================ */
+/* API 配置样式
+/* ============================================================ */
+.settings-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #F0E8DC;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4A3728;
+  margin-bottom: 10px;
+}
+
+.settings-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #4A3728;
+}
+
+.settings-toggle input[type="checkbox"] {
+  width: 36px;
+  height: 20px;
+  accent-color: #E8D5F5;
+  cursor: pointer;
+}
+
+.api-config-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.api-config-fields label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #4A3728;
+}
+
+.api-config-fields label span:first-child {
+  min-width: 70px;
+  color: #6B7280;
+}
+
+.api-config-fields input[type="text"],
+.api-config-fields input[type="password"],
+.api-config-fields input[type="number"] {
+  flex: 1;
+  max-width: 160px;
+  padding: 5px 8px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 11px;
+  outline: none;
+  background: white;
+  color: #4A3728;
+  font-family: inherit;
+  margin-left: 8px;
+}
+
+.api-config-fields input[type="text"]:focus,
+.api-config-fields input[type="password"]:focus,
+.api-config-fields input[type="number"]:focus {
+  border-color: #E8D5F5;
+}
+
+.api-config-fields input[type="range"] {
+  flex: 1;
+  max-width: 100px;
+  accent-color: #E8D5F5;
+  margin-left: 8px;
+}
+
+.api-config-fields .range-value {
+  min-width: 24px;
+  text-align: center;
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-left: 4px;
+}

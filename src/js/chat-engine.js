@@ -10,15 +10,23 @@
  * - 对话限额 & 冷却计时器联动
  */
 
+const path = require('path');
+const fs = require('fs');
+
 class ChatEngine {
-  constructor(personalityScheduler, sleepScheduler, userPrefs) {
+  constructor(personalityScheduler, sleepScheduler, userPrefs, apiConfig, dataDir) {
     this.personalityScheduler = personalityScheduler;
     this.sleepScheduler = sleepScheduler;
     this.userPrefs = userPrefs;
-    this.conversationHistory = []; // 当前会话历史（内存中）
-    this.maxHistoryTurns = 5;      // 保留 5 轮
-    this.sessionTurnCount = 0;
-    this.maxTurnsPerSession = 5;
+    this.apiConfig = apiConfig || null;
+    this.maxHistoryTurns = 5;      // 保留 5 轮（模板模式）
+    this.maxTurnsPerSession = 5;   // 每次会话最多轮次
+    this.maxApiHistoryTurns = 10;  // API 上下文保留最近 10 轮
+    // 每个人格独立上下文（keyed by personalityId）
+    this.contexts = {};
+    this.contextsFile = dataDir ? path.join(dataDir, 'personality-contexts.json') : null;
+    // 从磁盘加载已有上下文
+    this._loadContexts();
   }
 
   // ============================================================
@@ -26,9 +34,62 @@ class ChatEngine {
   // ============================================================
 
   init() {
-    this.conversationHistory = [];
-    this.sessionTurnCount = 0;
+    const ctx = this._getContext();
+    ctx.conversationHistory = [];
+    ctx.sessionTurnCount = 0;
     return this;
+  }
+
+  // ============================================================
+  // 人格上下文管理（每个人格独立内存 + 磁盘持久化）
+  // ============================================================
+
+  /**
+   * 获取当前人格的上下文
+   * 每个人格有独立的：apiHistory, conversationHistory, sessionTurnCount
+   */
+  _getContext() {
+    const personality = this.personalityScheduler?.getActive();
+    const id = personality?.id || '__default__';
+    if (!this.contexts[id]) {
+      this.contexts[id] = {
+        apiHistory: [],
+        conversationHistory: [],
+        sessionTurnCount: 0,
+      };
+    }
+    return this.contexts[id];
+  }
+
+  /**
+   * 持久化所有人格的上下文到磁盘
+   */
+  _saveContexts() {
+    if (!this.contextsFile) return;
+    try {
+      const dir = path.dirname(this.contextsFile);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(this.contextsFile, JSON.stringify(this.contexts, null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to save personality contexts:', e.message);
+    }
+  }
+
+  /**
+   * 从磁盘加载人格上下文
+   */
+  _loadContexts() {
+    if (!this.contextsFile) return;
+    try {
+      if (fs.existsSync(this.contextsFile)) {
+        this.contexts = JSON.parse(fs.readFileSync(this.contextsFile, 'utf-8'));
+      }
+    } catch (e) {
+      // 文件损坏则忽略，使用空 contexts
+      this.contexts = {};
+    }
   }
 
   // ============================================================
@@ -40,7 +101,23 @@ class ChatEngine {
    * @param {string} message - 用户输入
    * @returns {string} 角色回应（≤3 句话）
    */
-  respond(message) {
+  async respond(message) {
+    // 1. 如果 API 模式开启且可用，优先使用 LLM 生成回复
+    if (this.apiConfig) {
+      const config = this.apiConfig.getFull();
+      if (config.enabled && config.apiKey) {
+        const apiResponse = await this._callAPIWithContext(message);
+        if (apiResponse) {
+          this._getContext().sessionTurnCount++;
+          if (this.sleepScheduler) this.sleepScheduler.recordInteraction();
+          this._saveContexts();
+          return apiResponse;
+        }
+        // API 调用失败 — 自动回退到模板匹配
+      }
+    }
+
+    // 2. Fallback: 模板匹配（保留完整原有逻辑）
     // 检查睡眠状态
     if (this.sleepScheduler && !this.sleepScheduler.isAwake()) {
       return this._getSleepyResponse();
@@ -52,13 +129,13 @@ class ChatEngine {
     }
 
     // 检查会话轮次上限
-    if (this.sessionTurnCount >= this.maxTurnsPerSession) {
-      this.sessionTurnCount = 0;
+    if (this._getContext().sessionTurnCount >= this.maxTurnsPerSession) {
+      this._getContext().sessionTurnCount = 0;
       return '……今天聊得够多了。下次再聊吧。';
     }
 
     // 更新状态
-    this.sessionTurnCount++;
+    this._getContext().sessionTurnCount++;
 
     if (this.sleepScheduler) {
       this.sleepScheduler.recordInteraction();
@@ -82,6 +159,7 @@ class ChatEngine {
     // 记录对话历史
     this._recordHistory(message, response, personality.id);
 
+    this._saveContexts();
     return response;
   }
 
@@ -159,7 +237,8 @@ class ChatEngine {
   // ============================================================
 
   _recordHistory(userMessage, botResponse, personalityId) {
-    this.conversationHistory.push({
+    const ctx = this._getContext();
+    ctx.conversationHistory.push({
       user: userMessage,
       bot: botResponse,
       personalityId,
@@ -167,8 +246,8 @@ class ChatEngine {
     });
 
     // 保留最近 N 轮
-    if (this.conversationHistory.length > this.maxHistoryTurns) {
-      this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryTurns);
+    if (ctx.conversationHistory.length > this.maxHistoryTurns) {
+      ctx.conversationHistory = ctx.conversationHistory.slice(-this.maxHistoryTurns);
     }
   }
 
@@ -176,10 +255,84 @@ class ChatEngine {
    * 获取压缩后的对话历史（给 LLM 升级用）
    */
   getCompressedHistory() {
-    return this.conversationHistory.map(h => ({
+    return this._getContext().conversationHistory.map(h => ({
       u: h.user.substring(0, 100),
       b: h.bot.substring(0, 100),
     }));
+  }
+
+  // ============================================================
+  // LLM API 支持（OpenAI 兼容格式）
+  // ============================================================
+
+  /**
+   * 从人格配置构建 system prompt
+   * @param {Object} personality - 当前人格对象
+   * @returns {string} system prompt 文本
+   */
+  _buildSystemPrompt(personality) {
+    if (!personality) return '你是一个可爱的桌面宠物。';
+
+    const rules = [];
+    if (personality.chatBehavior?.maxLinesPerTurn) {
+      rules.push(`- 每次回复不超过${personality.chatBehavior.maxLinesPerTurn}句话`);
+    }
+    if (personality.chatBehavior?.closureStyle) {
+      const styleMap = {
+        'abrupt': '语聊该结束时干脆利落，不拖泥带水',
+        'punchline': '结束时最好有一句点睛之笔或笑点',
+        'gentle': '结束时温柔收尾，让人感觉舒适',
+        'summary': '结束时做个简短总结或留下思考',
+        'dramatic_exit': '结束时要有气势，让人印象深刻',
+        'roast': '结束时带一点调侃或吐槽',
+      };
+      rules.push(`- 对话结束风格：${styleMap[personality.chatBehavior.closureStyle] || '自然结束'}`);
+    }
+    if (personality.catchphrases?.length > 0) {
+      rules.push(`- 你的经典口癖：${personality.catchphrases.join('、')}`);
+    }
+
+    return `你是${personality.name}。${personality.tags ? '性格标签：' + personality.tags.join('、') + '。' : ''}${personality.style ? '说话风格：' + personality.style.join('、') + '。' : ''}
+
+${personality.voiceProfile || ''}
+
+${personality.worldview || ''}
+
+对话规则：
+${rules.join('\n')}
+
+请完全以${personality.name}的身份和语气回应，不要出戏，不要解释你是AI。中文回复。`;
+  }
+
+  /**
+   * 调用 LLM API 获取上下文感知回应
+   * @param {string} userMessage - 用户输入
+   * @returns {string|null} 角色回应，失败返回 null
+   */
+  async _callAPIWithContext(userMessage) {
+    if (!this.apiConfig) return null;
+    const personality = this.personalityScheduler?.getActive();
+    if (!personality) return null;
+
+    const systemPrompt = this._buildSystemPrompt(personality);
+
+    const ctx = this._getContext();
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...ctx.apiHistory.slice(-this.maxApiHistoryTurns * 2),
+      { role: 'user', content: userMessage },
+    ];
+
+    const response = await this.apiConfig.callChatCompletion(messages);
+    if (response) {
+      ctx.apiHistory.push({ role: 'user', content: userMessage });
+      ctx.apiHistory.push({ role: 'assistant', content: response });
+      if (ctx.apiHistory.length > this.maxApiHistoryTurns * 2 + 2) {
+        ctx.apiHistory = ctx.apiHistory.slice(-this.maxApiHistoryTurns * 2);
+      }
+    }
+    return response;
   }
 
   // ============================================================
@@ -201,8 +354,17 @@ class ChatEngine {
   // ============================================================
 
   resetSession() {
-    this.conversationHistory = [];
-    this.sessionTurnCount = 0;
+    const ctx = this._getContext();
+    ctx.conversationHistory = [];
+    ctx.sessionTurnCount = 0;
+    this._saveContexts();
+  }
+
+  /**
+   * 人格切换时持久化当前人格的上下文
+   */
+  onPersonalityChanged() {
+    this._saveContexts();
   }
 
   /**

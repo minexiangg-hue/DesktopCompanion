@@ -56,6 +56,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
    */
   sendFeedback: (type, id, vote) => ipcRenderer.invoke('feedback:send', type, id, vote),
 
+  // ========== API 配置（AI 聊天） ==========
+
+  /** 获取 API 配置（前端展示用，key 已脱敏） */
+  getApiConfig: () => ipcRenderer.invoke('api-config:get'),
+
+  /** 更新 API 配置 @param {object} config { enabled, endpoint, apiKey, model, temperature, maxTokens } */
+  setApiConfig: (config) => ipcRenderer.invoke('api-config:set', config),
+
   // ========== 偏好 ==========
 
   /** 获取所有用户偏好 */
@@ -85,5 +93,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event, personality) => callback(personality);
     ipcRenderer.on('personality:changed', handler);
     return () => ipcRenderer.removeListener('personality:changed', handler);
+  },
+
+  /** 打开设置面板通知（来自托盘菜单） */
+  onOpenSettings: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('settings:open', handler);
+    return () => ipcRenderer.removeListener('settings:open', handler);
   },
 });

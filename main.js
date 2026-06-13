@@ -28,6 +28,7 @@ const ContentFetcher = require('./src/js/content-fetcher');
 const ChatEngine = require('./src/js/chat-engine');
 const UserPreferences = require('./src/js/user-preferences');
 const AvataraIntegration = require('./src/js/avatar-integration');
+const ApiConfig = require('./src/js/api-config');
 
 // ============================================================
 // 模块引用
@@ -38,6 +39,7 @@ let contentFetcher = null;
 let chatEngine = null;
 let userPrefs = null;
 let avataraIntegration = null;
+let apiConfig = null;
 
 // ============================================================
 // 窗口状态
@@ -117,6 +119,12 @@ function createTray() {
         mainWindow.webContents.send('daily:surpriseReady', surprise);
       }
     } },
+    { label: '设置', click: () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show();
+        mainWindow.webContents.send('settings:open');
+      }
+    } },
     { type: 'separator' },
     { label: '切换人格', submenu: [] }, // 动态填充
     { type: 'separator' },
@@ -150,6 +158,7 @@ function updateTrayPersonalityMenu() {
           mainWindow.webContents.send('personality:changed', personalityScheduler.getActive());
         }
         updateTrayPersonalityMenu();
+        if (chatEngine) chatEngine.onPersonalityChanged();
       }
     },
   }));
@@ -161,6 +170,12 @@ function updateTrayPersonalityMenu() {
       const surprise = contentFetcher ? await contentFetcher.getDailySurprise() : null;
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('daily:surpriseReady', surprise);
+      }
+    } },
+    { label: '设置', click: () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show();
+        mainWindow.webContents.send('settings:open');
       }
     } },
     { type: 'separator' },
@@ -210,9 +225,12 @@ ipcMain.handle('personality:getActive', async () => {
 ipcMain.handle('personality:switch', async (_event, id) => {
   if (!personalityScheduler) return false;
   const result = personalityScheduler.switchTo(id);
-  if (result && mainWindow) {
-    mainWindow.webContents.send('personality:changed', personalityScheduler.getActive());
+  if (result) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('personality:changed', personalityScheduler.getActive());
+    }
     updateTrayPersonalityMenu();
+    if (chatEngine) chatEngine.onPersonalityChanged();
   }
   return result;
 });
@@ -276,6 +294,20 @@ ipcMain.handle('prefs:set', async (_event, config) => {
 });
 
 // ============================================================
+// IPC Handlers — API 配置
+// ============================================================
+ipcMain.handle('api-config:get', async () => {
+  if (!apiConfig) return { enabled: false, endpoint: '', model: '', temperature: 0.8, maxTokens: 200, apiKey: '' };
+  return apiConfig.get();
+});
+
+ipcMain.handle('api-config:set', async (_event, config) => {
+  if (!apiConfig) return false;
+  apiConfig.update(config);
+  return true;
+});
+
+// ============================================================
 // 应用生命周期
 // ============================================================
 app.whenReady().then(() => {
@@ -324,6 +356,12 @@ app.whenReady().then(() => {
   userPrefs.init();
 
   // ============================================================
+  // API 配置初始化
+  // ============================================================
+  apiConfig = new ApiConfig(DATA_DIR);
+  apiConfig.init();
+
+  // ============================================================
   // Avatara 用户画像集成
   // ============================================================
   avataraIntegration = new AvataraIntegration(DATA_DIR);
@@ -338,7 +376,7 @@ app.whenReady().then(() => {
   // ============================================================
   // 聊天引擎初始化（依赖人格调度器 + 睡眠调度器 + 偏好）
   // ============================================================
-  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs);
+  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs, apiConfig, DATA_DIR);
   chatEngine.init();
 });
 

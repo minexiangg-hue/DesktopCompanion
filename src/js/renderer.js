@@ -31,6 +31,17 @@ const chatInput = document.getElementById('chat-input');
 const chatMessages = document.getElementById('chat-messages');
 const personalityPicker = document.getElementById('personality-picker');
 const settingsPanel = document.getElementById('settings-panel');
+const settingsBtn = document.getElementById('settings-btn');
+
+// ============================================================
+// 设置按钮点击
+// ============================================================
+if (settingsBtn) {
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSettings();
+  });
+}
 
 // ============================================================
 // 窗口拖拽（角色区域可拖拽移动窗口）
@@ -91,27 +102,16 @@ async function handleCharacterClick() {
     return;
   }
 
-  // 清醒: 简短问候
-  const personality = await window.electronAPI.getActivePersonality();
-  if (personality && personality.chatBehavior && personality.chatBehavior.greetings) {
-    const greetings = personality.chatBehavior.greetings;
-    const msg = greetings[Math.floor(Math.random() * greetings.length)];
-    showCharacterBubble(msg, 'greeting');
-  }
+  // 清醒: 进入聊天模式
+  enterChatMode();
 }
 
 // ============================================================
-// 进入聊天模式（双击）
+// 进入聊天模式
 // ============================================================
-characterEl.addEventListener('dblclick', async () => {
-  const sleepState = await window.electronAPI.getSleepState();
-  if (sleepState.state !== 'awake') return;
-
-  enterChatMode();
-});
-
 function enterChatMode() {
   state.chatMode = true;
+  document.body.classList.add('chat-mode-active');
   chatPanel.classList.add('visible');
   chatInput.focus();
 
@@ -129,6 +129,7 @@ function enterChatMode() {
 
 function exitChatMode() {
   state.chatMode = false;
+  document.body.classList.remove('chat-mode-active');
   chatPanel.classList.remove('visible');
   // 通知主进程恢复穿透模式
 }
@@ -355,6 +356,7 @@ document.addEventListener('contextmenu', (e) => {
 async function openSettings() {
   const prefs = await window.electronAPI.getPreferences();
   const schedule = await window.electronAPI.getSchedule();
+  const apiConfig = await window.electronAPI.getApiConfig();
 
   settingsPanel.innerHTML = `
     <div class="settings-header">⚙️ 设置</div>
@@ -371,12 +373,53 @@ async function openSettings() {
       </label>
       <label>每日对话限额 <input type="number" id="s-chat-limit" value="${prefs.dailyChatLimit || 20}" min="1" max="100"></label>
     </div>
+    <div class="settings-section">
+      <div class="settings-section-title">🤖 AI 对话设置</div>
+      <label class="settings-toggle">
+        <span>启用 AI 对话</span>
+        <input type="checkbox" id="s-api-enabled" ${apiConfig.enabled ? 'checked' : ''}>
+      </label>
+      <div id="api-config-fields" class="api-config-fields" style="${apiConfig.enabled ? '' : 'display:none;'}">
+        <label>
+          <span>API 地址</span>
+          <input type="text" id="s-api-endpoint" value="${apiConfig.endpoint || 'https://api.deepseek.com/v1/chat/completions'}" placeholder="https://api.deepseek.com/v1/chat/completions">
+        </label>
+        <label>
+          <span>API Key</span>
+          <input type="password" id="s-api-key" value="${apiConfig.apiKey || ''}" placeholder="sk-...">
+        </label>
+        <label>
+          <span>模型</span>
+          <input type="text" id="s-api-model" value="${apiConfig.model || 'deepseek-chat'}" placeholder="deepseek-chat">
+        </label>
+        <label>
+          <span>温度 (0-2)</span>
+          <input type="range" id="s-api-temperature" min="0" max="2" step="0.1" value="${apiConfig.temperature || 0.8}">
+          <span id="s-api-temp-value" class="range-value">${apiConfig.temperature || 0.8}</span>
+        </label>
+        <label>
+          <span>最大 Token</span>
+          <input type="number" id="s-api-max-tokens" value="${apiConfig.maxTokens || 200}" min="50" max="2000" step="50">
+        </label>
+      </div>
+    </div>
     <div class="settings-footer">
       <button id="s-save">保存</button>
       <button id="s-close">关闭</button>
     </div>
   `;
   settingsPanel.classList.add('visible');
+
+  // Toggle API config fields visibility
+  document.getElementById('s-api-enabled').addEventListener('change', (e) => {
+    const fields = document.getElementById('api-config-fields');
+    fields.style.display = e.target.checked ? '' : 'none';
+  });
+
+  // Update temperature display
+  document.getElementById('s-api-temperature').addEventListener('input', (e) => {
+    document.getElementById('s-api-temp-value').textContent = parseFloat(e.target.value).toFixed(1);
+  });
 
   document.getElementById('s-save').addEventListener('click', async () => {
     await window.electronAPI.setSchedule({
@@ -386,6 +429,15 @@ async function openSettings() {
     await window.electronAPI.setPreferences({
       activeFrequency: document.getElementById('s-frequency').value,
       dailyChatLimit: parseInt(document.getElementById('s-chat-limit').value),
+    });
+    // Save API config
+    await window.electronAPI.setApiConfig({
+      enabled: document.getElementById('s-api-enabled').checked,
+      endpoint: document.getElementById('s-api-endpoint').value,
+      apiKey: document.getElementById('s-api-key').value,
+      model: document.getElementById('s-api-model').value,
+      temperature: parseFloat(document.getElementById('s-api-temperature').value),
+      maxTokens: parseInt(document.getElementById('s-api-max-tokens').value),
     });
     settingsPanel.classList.remove('visible');
     showCharacterBubble('设置已保存！', 'normal');
@@ -416,6 +468,11 @@ async function init() {
   if (surprise) {
     setTimeout(() => showSurprise(surprise), 1000);
   }
+
+  // 监听托盘菜单"设置"按钮
+  window.electronAPI.onOpenSettings(() => {
+    openSettings();
+  });
 }
 
 // 暴露给其他模块
