@@ -1,0 +1,10 @@
+{
+  "wakeUp": "08:00",
+  "sleepTime": "22:00",
+  "maxDailyChats": 20,
+  "cooldownSeconds": 30,
+  "drowsyResponseLimit": 1,
+  "chatCount": 10,
+  "chatDate": "2026-06-15",
+  "updatedAt": "2026-06-15T08:05:24.988Z"
+}

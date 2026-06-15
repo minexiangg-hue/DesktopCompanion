@@ -17,9 +17,10 @@ const fs = require('fs');
 const path = require('path');
 
 class ContentFetcher {
-  constructor(dataDir, personalityScheduler) {
+  constructor(dataDir, personalityScheduler, webSearch) {
     this.dataDir = dataDir;
     this.personalityScheduler = personalityScheduler;
+    this.webSearch = webSearch || null;
     this.cacheFile = path.join(dataDir, 'content-cache.json');
     this.historyFile = path.join(dataDir, 'push-history.json');
     this.cache = {};
@@ -203,8 +204,8 @@ class ContentFetcher {
         source: 'meme-api',
       };
     }
-    // 降级：本地梗
-    return this._localMeme();
+    // API 失败，走降级链
+    return null;
   }
 
   async _fetchScenery() {
@@ -228,7 +229,7 @@ class ContentFetcher {
     const now = new Date();
     const month = now.getMonth() + 1;
     const day = now.getDate();
-    const result = await this._httpGetJSON(`https://api.wikimedia.org/api/v1/feed/onthisday/all/${month}/${day}`);
+    const result = await this._httpGetJSON(`https://api.wikimedia.org/api/v1/feed/onthisday/events/${month}/${day}`);
     if (result && result.events && result.events.length > 0) {
       const event = result.events[Math.floor(Math.random() * Math.min(result.events.length, 5))];
       return {
@@ -236,24 +237,28 @@ class ContentFetcher {
         source: 'wikipedia',
       };
     }
-    return this._localHistory(month, day);
+    return null;
   }
 
   async _fetchNews() {
-    // 新闻搜索 - 使用公开 API
-    const result = await this._httpGetJSON('https://newsapi.org/v2/top-headlines?country=us&pageSize=5');
-    if (result && result.articles && result.articles.length > 0) {
-      const article = result.articles[Math.floor(Math.random() * Math.min(result.articles.length, 3))];
-      return {
-        raw: article.title || '今日头条',
-        source: article.source?.name || 'news',
-      };
+    // 新闻搜索 — 使用 WebSearch（Reddit + HN，免 Key）
+    if (this.webSearch) {
+      // 每日惊喜优先拉热门（无搜索词 trending）
+      let results = await this.webSearch.trending({ limit: 5 });
+      if (!results || results.length === 0) {
+        // trending 失败时用默认关键词搜一下
+        results = await this.webSearch.searchNews('headlines', 5);
+      }
+      if (results && results.length > 0) {
+        const item = results[Math.floor(Math.random() * results.length)];
+        return {
+          raw: item.title,
+          source: item.source,
+        };
+      }
     }
-    // 降级
-    return {
-      raw: '📰 今日暂无头条——但请放心，世界还在运转。也许看看窗外比看新闻更好。',
-      source: 'local',
-    };
+    // API 失败，走降级链
+    return null;
   }
 
   _fetchTrivia() {
@@ -298,6 +303,7 @@ class ContentFetcher {
     }
 
     // 二级降级：使用本地内容
+    if (type === 'news') return this._localNews();
     if (type === 'meme') return this._localMeme();
     if (type === 'history') return this._localHistory(new Date().getMonth() + 1, new Date().getDate());
     if (type === 'trivia') return this._fetchTrivia();
@@ -344,6 +350,23 @@ class ContentFetcher {
     ];
     return {
       raw: memes[Math.floor(Math.random() * memes.length)],
+      source: 'local',
+    };
+  }
+
+  _localNews() {
+    const items = [
+      '端午节假期临近，多地推出文旅消费券促进假日经济',
+      '全球首个商用 AI 芯片突破 1000TOPS 算力门槛',
+      '国家统计局发布最新经济数据：制造业 PMI 连续三个月扩张',
+      'NASA 公布最新系外行星发现：可能适合生命存在',
+      '多地推行"数字人民币"跨境支付试点',
+      'OpenAI 发布新一代推理模型，多项基准测试刷新纪录',
+      '夏季用电高峰来临，各地电力部门部署保供措施',
+      '教育部：2026 年高考报名人数再创新高',
+    ];
+    return {
+      raw: items[Math.floor(Math.random() * items.length)],
       source: 'local',
     };
   }

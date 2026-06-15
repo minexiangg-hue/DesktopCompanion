@@ -1,4 +1,24 @@
 {
   "pushes": {},
-  "chats": {}
+  "chats": {},
+  "personalityVotes": {},
+  "contentTypeVotes": {},
+  "push": {
+    "surprise_1781247217289": {
+      "vote": 1,
+      "timestamp": 1781266258694
+    },
+    "surprise_1781330504997": {
+      "vote": 1,
+      "timestamp": 1781347587437
+    },
+    "surprise_1781417938444": {
+      "vote": 1,
+      "timestamp": 1781462124814
+    },
+    "surprise_1781507774874": {
+      "vote": 1,
+      "timestamp": 1781510346913
+    }
+  }
 }

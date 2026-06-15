@@ -85,6 +85,54 @@ function createWindow() {
     }
   });
 
+  // 拖拽 + 点击通过 CSS -webkit-app-region 实现，无需 JS 干预
+  // body = drag（透明区域可拖拽），character-container = no-drag（可点击）
+
+  // IPC handler: 窗口形状裁剪（Linux XShape — 物理裁剪到角色区域）
+  // 效果：即使 transparent 不生效，系统也只显示角色那一块
+  ipcMain.on('window:setShape', (_event, mode) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    try {
+      if (mode === 'full') {
+        mainWindow.setShape([{ x: 0, y: 0, width: 280, height: 320 }]);
+      } else {
+        // 'character' = 只保留角色 + 气泡空间
+        // 窗口 280x320, 角色容器 140x168 在右下角 (x=140, y=152)
+        mainWindow.setShape([{ x: 110, y: 85, width: 170, height: 235 }]);
+      }
+    } catch (e) {
+      // setShape 在不支持的平台上静默忽略
+    }
+  });
+
+  // IPC handler: 窗口尺寸切换（全窗口 ↔ 角色区域）
+  // 当 setShape 不工作时（Wayland/Windows 等），直接用 resize 缩小窗口
+  // 角色在窗口右下角 140x168，小窗口 170x235 刚好包住角色 + 气泡
+  ipcMain.on('window:resizeTo', (_event, mode) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [curX, curY] = mainWindow.getPosition();
+    const [curW, curH] = mainWindow.getSize();
+
+    if (mode === 'character') {
+      // 角色在 280x320 窗口的右下角 (x=140, y=152, w=140, h=168)
+      // 缩小到 170x235，保持角色右下角在同样的屏幕位置
+      const anchorX = curX + curW;  // 窗口右边缘
+      const anchorY = curY + curH;  // 窗口下边缘
+      const newW = 170;
+      const newH = 235;
+      mainWindow.setSize(newW, newH);
+      mainWindow.setPosition(anchorX - newW, anchorY - newH);
+    } else {
+      // 恢复全窗口，保持右下角对齐
+      const anchorX = curX + curW;
+      const anchorY = curY + curH;
+      const newW = 280;
+      const newH = 320;
+      mainWindow.setSize(newW, newH);
+      mainWindow.setPosition(anchorX - newW, anchorY - newH);
+    }
+  });
+
   // 防止关闭时退出（隐藏到托盘）
   mainWindow.on('close', (event) => {
     if (!isQuitting) {
@@ -308,6 +356,15 @@ ipcMain.handle('api-config:set', async (_event, config) => {
 });
 
 // ============================================================
+// 跨平台透明窗口支持
+// ============================================================
+app.commandLine.appendSwitch('enable-transparent-visuals');
+// Linux 上用 SwiftShader 软件渲染，解决无硬件合成器时的黑块问题
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('use-gl', 'swiftshader');
+}
+
+// ============================================================
 // 应用生命周期
 // ============================================================
 app.whenReady().then(() => {
@@ -376,7 +433,7 @@ app.whenReady().then(() => {
   // ============================================================
   // 聊天引擎初始化（依赖人格调度器 + 睡眠调度器 + 偏好）
   // ============================================================
-  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs, apiConfig, DATA_DIR);
+  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs, apiConfig, null, DATA_DIR);
   chatEngine.init();
 });
 

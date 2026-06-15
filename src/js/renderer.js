@@ -16,8 +16,6 @@ const state = {
   sleepState: 'awake',
   isTalking: false,
   chatMode: false,
-  isDragging: false,
-  dragOffset: { x: 0, y: 0 },
 };
 
 // ============================================================
@@ -32,6 +30,7 @@ const chatMessages = document.getElementById('chat-messages');
 const personalityPicker = document.getElementById('personality-picker');
 const settingsPanel = document.getElementById('settings-panel');
 const settingsBtn = document.getElementById('settings-btn');
+const chatClose = document.getElementById('chat-close');
 
 // ============================================================
 // 设置按钮点击
@@ -44,66 +43,61 @@ if (settingsBtn) {
 }
 
 // ============================================================
-// 窗口拖拽（角色区域可拖拽移动窗口）
+// 聊天关闭按钮
 // ============================================================
-let isPointerDown = false;
-let pointerStart = { x: 0, y: 0 };
+if (chatClose) {
+  chatClose.addEventListener('click', (e) => {
+    e.stopPropagation();
+    exitChatMode();
+  });
+}
 
-characterEl.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || state.chatMode) return;
-  isPointerDown = true;
-  pointerStart.x = e.clientX;
-  pointerStart.y = e.clientY;
-  // 如果长按 800ms 进入拖拽模式
-  state.dragTimer = setTimeout(() => {
-    state.isDragging = true;
-    state.dragOffset.x = e.clientX;
-    state.dragOffset.y = e.clientY;
-  }, 800);
-});
+// ============================================================
+// 点击检测
+// body = drag（透明区域 OS 原生拖拽），character = no-drag（可点击）
+// ============================================================
 
-document.addEventListener('pointermove', (e) => {
-  if (!state.isDragging) return;
-  // 拖拽: 窗口移动由主进程处理
-  // 这里通过 IPC 通知主进程
-});
-
-document.addEventListener('pointerup', (e) => {
-  clearTimeout(state.dragTimer);
-  if (state.isDragging) {
-    state.isDragging = false;
-    return;
-  }
-  isPointerDown = false;
-
-  // 如果移动距离很小，视为点击
-  const dx = e.clientX - pointerStart.x;
-  const dy = e.clientY - pointerStart.y;
-  if (Math.abs(dx) < 5 && Math.abs(dy) < 5 && !state.chatMode) {
+characterEl.addEventListener('click', () => {
+  if (!state.chatMode) {
     handleCharacterClick();
   }
 });
 
 // ============================================================
+// 窗口形状管理（配合主进程 setShape）
+// ============================================================
+function updateWindowShape(mode) {
+  if (window.electronAPI.setWindowShape) {
+    window.electronAPI.setWindowShape(mode);
+  }
+}
+
+// ============================================================
 // 角色交互
 // ============================================================
 async function handleCharacterClick() {
-  const sleepState = await window.electronAPI.getSleepState();
+  try {
+    const sleepState = await window.electronAPI.getSleepState();
 
-  if (sleepState.state === 'asleep') {
-    // 睡眠中点击: 迷糊回应
-    showSleepyResponse();
-    return;
+    if (sleepState.state === 'asleep') {
+      // 睡眠中点击: 迷糊回应
+      showSleepyResponse();
+      return;
+    }
+
+    if (sleepState.state === 'drowsy') {
+      // 临时唤醒: 1 轮对话
+      showDrowsyGreeting();
+      return;
+    }
+
+    // 清醒: 进入聊天模式
+    enterChatMode();
+  } catch (err) {
+    console.error('handleCharacterClick failed:', err);
+    // 获取睡眠状态失败时，默认进入聊天模式
+    enterChatMode();
   }
-
-  if (sleepState.state === 'drowsy') {
-    // 临时唤醒: 1 轮对话
-    showDrowsyGreeting();
-    return;
-  }
-
-  // 清醒: 进入聊天模式
-  enterChatMode();
 }
 
 // ============================================================
@@ -115,6 +109,9 @@ function enterChatMode() {
   chatPanel.classList.add('visible');
   chatInput.focus();
 
+  // 展开窗口到完整尺寸（聊天面板占满窗口）
+  updateWindowShape('full');
+
   // 通知主进程窗口调整为可交互模式
   chatMessages.innerHTML = '';
 
@@ -124,6 +121,8 @@ function enterChatMode() {
       const msg = p.chatBehavior.greetings[Math.floor(Math.random() * p.chatBehavior.greetings.length)];
       addChatMessage(p.name || '宠物', msg, 'bot');
     }
+  }).catch(err => {
+    console.error('Failed to get personality for greeting:', err);
   });
 }
 
@@ -131,6 +130,10 @@ function exitChatMode() {
   state.chatMode = false;
   document.body.classList.remove('chat-mode-active');
   chatPanel.classList.remove('visible');
+
+  // 恢复仅角色区域
+  updateWindowShape('character');
+
   // 通知主进程恢复穿透模式
 }
 
@@ -141,16 +144,26 @@ chatInput.addEventListener('keydown', async (e) => {
     addChatMessage('你', msg, 'user');
     chatInput.value = '';
 
-    const canInteract = await checkCanInteract();
-    if (!canInteract) {
-      addChatMessage('宠物', '……今天说了太多话了, 有点累了……明天再聊吧。', 'bot');
-      setTimeout(exitChatMode, 2000);
-      return;
-    }
+    try {
+      const canInteract = await checkCanInteract();
+      if (!canInteract) {
+        addChatMessage('宠物', '……今天说了太多话了, 有点累了……明天再聊吧。', 'bot');
+        setTimeout(exitChatMode, 2000);
+        return;
+      }
 
-    const response = await window.electronAPI.getChatResponse(msg);
-    const personality = await window.electronAPI.getActivePersonality();
-    addChatMessage(personality?.name || '宠物', response, 'bot');
+      // 显示"思考中"气泡
+      const thinkingId = addThinkingBubble();
+
+      const response = await window.electronAPI.getChatResponse(msg);
+      const personality = await window.electronAPI.getActivePersonality();
+
+      // 替换为实际回复
+      replaceThinkingBubble(thinkingId, personality?.name || '宠物', response || '……嗯？');
+    } catch (err) {
+      console.error('Chat response failed:', err);
+      addChatMessage('宠物', '……出了点问题，等一下再试。', 'bot');
+    }
   }
 });
 
@@ -174,6 +187,51 @@ function addChatMessage(sender, text, type) {
   div.innerHTML = `<span class="chat-sender">${sender}:</span> <span class="chat-text">${text}</span>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+let thinkingCounter = 0;
+
+/**
+ * 插入"思考中"气泡（搜索 / LLM 调用时的 loading 状态）
+ * @returns {number} thinkingId — 用于后续替换
+ */
+function addThinkingBubble() {
+  const id = ++thinkingCounter;
+  const div = document.createElement('div');
+  div.className = 'chat-message bot thinking';
+  div.dataset.thinkingId = id;
+  div.innerHTML = `
+    <span class="chat-sender">宠物:</span>
+    <span class="chat-text">
+      <span class="typing-dots">
+        <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+      </span>
+    </span>
+  `;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return id;
+}
+
+/**
+ * 替换"思考中"气泡为实际回复
+ * @param {number} id - addThinkingBubble 返回的 ID
+ * @param {string} sender - 发送者名称
+ * @param {string} text - 回复内容
+ */
+function replaceThinkingBubble(id, sender, text) {
+  const bubbles = chatMessages.querySelectorAll('.chat-message.bot.thinking');
+  for (const bubble of bubbles) {
+    if (parseInt(bubble.dataset.thinkingId) === id) {
+      bubble.className = 'chat-message bot';
+      bubble.innerHTML = `<span class="chat-sender">${sender}:</span> <span class="chat-text">${text}</span>`;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return;
+    }
+  }
+  // 没找到对应气泡，追加新消息
+  addChatMessage(sender, text, 'bot');
 }
 
 // ============================================================
@@ -293,13 +351,20 @@ function showSurprise(surprise) {
     const vote = parseInt(btn.dataset.vote);
     window.electronAPI.sendFeedback('push', surprise.id || Date.now().toString(), vote);
     btn.classList.add('active');
-    setTimeout(() => surprisePanel.classList.remove('visible'), 500);
+    setTimeout(() => {
+      surprisePanel.classList.remove('visible');
+      updateWindowShape('character');
+    }, 500);
   });
   surprisePanel.appendChild(feedback);
+
+  // 惊喜面板展开到全窗口
+  updateWindowShape('full');
 
   // 自动隐藏
   setTimeout(() => {
     surprisePanel.classList.remove('visible');
+    updateWindowShape('character');
   }, 15000);
 }
 
@@ -319,6 +384,7 @@ async function openPersonalityPicker() {
 
   personalityPicker.innerHTML = '<div class="picker-header">🎭 切换人格</div>';
   personalityPicker.classList.add('visible');
+  updateWindowShape('full');
 
   personalities.forEach(p => {
     const card = document.createElement('div');
@@ -331,6 +397,7 @@ async function openPersonalityPicker() {
     card.addEventListener('click', async () => {
       await window.electronAPI.switchPersonality(p.id);
       personalityPicker.classList.remove('visible');
+      updateWindowShape('character');
     });
     personalityPicker.appendChild(card);
   });
@@ -338,7 +405,10 @@ async function openPersonalityPicker() {
   const closeBtn = document.createElement('button');
   closeBtn.className = 'picker-close';
   closeBtn.textContent = '✕';
-  closeBtn.addEventListener('click', () => personalityPicker.classList.remove('visible'));
+  closeBtn.addEventListener('click', () => {
+    personalityPicker.classList.remove('visible');
+    updateWindowShape('character');
+  });
   personalityPicker.appendChild(closeBtn);
 }
 
@@ -409,6 +479,7 @@ async function openSettings() {
     </div>
   `;
   settingsPanel.classList.add('visible');
+  updateWindowShape('full');
 
   // Toggle API config fields visibility
   document.getElementById('s-api-enabled').addEventListener('change', (e) => {
@@ -440,11 +511,13 @@ async function openSettings() {
       maxTokens: parseInt(document.getElementById('s-api-max-tokens').value),
     });
     settingsPanel.classList.remove('visible');
+    updateWindowShape('character');
     showCharacterBubble('设置已保存！', 'normal');
   });
 
   document.getElementById('s-close').addEventListener('click', () => {
     settingsPanel.classList.remove('visible');
+    updateWindowShape('character');
   });
 }
 
@@ -453,21 +526,37 @@ async function openSettings() {
 // ============================================================
 async function init() {
   // 加载状态
-  const sleepState = await window.electronAPI.getSleepState();
-  state.sleepState = sleepState.state;
-  document.body.dataset.sleepState = sleepState.state;
-
-  const personality = await window.electronAPI.getActivePersonality();
-  if (personality) {
-    state.currentPersonality = personality;
-    document.body.dataset.personality = personality.id;
+  try {
+    const sleepState = await window.electronAPI.getSleepState();
+    state.sleepState = sleepState.state;
+    document.body.dataset.sleepState = sleepState.state;
+  } catch (err) {
+    console.error('Failed to get sleep state:', err);
   }
 
-  // 获取今日惊喜
-  const surprise = await window.electronAPI.getDailySurprise();
-  if (surprise) {
-    setTimeout(() => showSurprise(surprise), 1000);
+  try {
+    const personality = await window.electronAPI.getActivePersonality();
+    if (personality) {
+      state.currentPersonality = personality;
+      document.body.dataset.personality = personality.id;
+    }
+  } catch (err) {
+    console.error('Failed to get personality:', err);
   }
+
+  try {
+    // 获取今日惊喜
+    const surprise = await window.electronAPI.getDailySurprise();
+    if (surprise) {
+      setTimeout(() => showSurprise(surprise), 1000);
+    }
+  } catch (err) {
+    console.error('Failed to get daily surprise:', err);
+  }
+
+  // 窗口初始设为角色区域裁剪（面板关闭时只显示角色）
+  // 延迟执行确保 DOM 布局已完成
+  setTimeout(() => updateWindowShape('character'), 500);
 
   // 监听托盘菜单"设置"按钮
   window.electronAPI.onOpenSettings(() => {

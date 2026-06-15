@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   /** 切换窗口穿透模式（true=点穿到桌面，false=正常交互） */
   setClickThrough: (ignore) => ipcRenderer.send('window:setClickThrough', ignore),
 
+  /** 裁剪窗口形状到角色区域或全窗口 @param {'character'|'full'} mode */
+  setWindowShape: (mode) => ipcRenderer.send('window:setShape', mode),
+
+  /** 物理缩放窗口到角色大小或全窗口 @param {'character'|'full'} mode */
+  resizeWindowTo: (mode) => ipcRenderer.send('window:resizeTo', mode),
+
   // ========== 人格系统 ==========
 
   /** 返回所有人格列表（含元数据） */
