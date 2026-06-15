@@ -100,9 +100,14 @@ class ChatEngine {
   /**
    * 获取聊天回应
    * @param {string} message - 用户输入
-   * @returns {string} 角色回应（≤3 句话）
+   * @param {function} [progressCallback] - 搜索进度回调 ({state, terms, count})
+   * @returns {string|{text:string, searchPerformed:boolean, sources:Array|null}} 角色回应
    */
-  async respond(message) {
+  async respond(message, progressCallback = null) {
+    this._searchProgressCallback = progressCallback;
+
+    const SEARCH_TIMEOUT = 30000;
+
     // ============================================================
     // 1. API 模式（LLM 驱动，支持自主搜索决策）
     // ============================================================
@@ -111,22 +116,45 @@ class ChatEngine {
       if (config.enabled && config.apiKey) {
         // 先做快速通道关键词预检
         const intent = this._detectIntent(message);
+        const searchIntents = ['search', 'news', 'default_searchable'];
         console.log(`[ChatEngine] API mode, intent="${intent}", webSearch=${!!this.webSearch}`);
 
         let apiResponse;
-        if ((intent === 'search' || intent === 'news') && this.webSearch) {
+        if (searchIntents.includes(intent) && this.webSearch) {
           // 快速通道：预检命中 → 直接搜 → 结果注入 LLM
           console.log(`[ChatEngine] Quick path: intent="${intent}"`);
-          apiResponse = await this._callAPIWithSearch(message, intent);
+          try {
+            apiResponse = await Promise.race([
+              this._callAPIWithSearch(message, intent),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), SEARCH_TIMEOUT))
+            ]);
+          } catch (e) {
+            console.log(`[ChatEngine] Quick path timeout or error: ${e.message}`);
+            this._reportProgress({ state: 'timeout' });
+            apiResponse = { text: '搜索超时了……网络可能不太好，等一下再试吧。', searchPerformed: false, sources: null };
+          }
         } else {
           // 正常通道：调 LLM，让它自主决定是否搜索
-          apiResponse = await this._callAPIWithContext(message);
+          try {
+            apiResponse = await Promise.race([
+              this._callAPIWithContext(message),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), SEARCH_TIMEOUT))
+            ]);
+          } catch (e) {
+            console.log(`[ChatEngine] API context call timeout or error: ${e.message}`);
+            this._reportProgress({ state: 'timeout' });
+            apiResponse = { text: '响应超时了……等一下再试吧。', searchPerformed: false, sources: null };
+          }
         }
 
         if (apiResponse) {
           this._getContext().sessionTurnCount++;
           if (this.sleepScheduler) this.sleepScheduler.recordInteraction();
           this._saveContexts();
+          // 确保返回对象格式（向后兼容：字符串 → 包装为对象）
+          if (typeof apiResponse === 'string') {
+            return { text: apiResponse, searchPerformed: false, sources: null };
+          }
           return apiResponse;
         }
         // API 调用失败 → 自动回退到模板匹配
@@ -138,18 +166,18 @@ class ChatEngine {
     // ============================================================
     // 检查睡眠状态
     if (this.sleepScheduler && !this.sleepScheduler.isAwake()) {
-      return this._getSleepyResponse();
+      return { text: this._getSleepyResponse(), searchPerformed: false, sources: null };
     }
 
     // 检查对话限额 + 冷却（委托 SleepScheduler）
     if (this.sleepScheduler && !this.sleepScheduler.canInteract()) {
-      return '……今天说了太多话了，有点累了……明天再聊吧。';
+      return { text: '……今天说了太多话了，有点累了……明天再聊吧。', searchPerformed: false, sources: null };
     }
 
     // 检查会话轮次上限
     if (this._getContext().sessionTurnCount >= this.maxTurnsPerSession) {
       this._getContext().sessionTurnCount = 0;
-      return '……今天聊得够多了。下次再聊吧。';
+      return { text: '……今天聊得够多了。下次再聊吧。', searchPerformed: false, sources: null };
     }
 
     // 更新状态
@@ -165,23 +193,36 @@ class ChatEngine {
       : null;
 
     if (!personality || !personality.templates) {
-      return '……嗯？';
+      return { text: '……嗯？', searchPerformed: false, sources: null };
     }
 
     // 识别意图
     const intent = this._detectIntent(message);
+    const searchIntents = ['search', 'news', 'default_searchable'];
 
     // 搜索意图处理（模板模式）
-    if ((intent === 'search' || intent === 'news') && this.webSearch) {
+    if (searchIntents.includes(intent) && this.webSearch) {
       console.log(`[ChatEngine] Template search: intent="${intent}"`);
-      const searchResponse = await this._searchAndRespond(message, intent, personality);
-      if (searchResponse) {
-        console.log(`[ChatEngine] Template search succeeded`);
-        this._recordHistory(message, searchResponse, personality.id);
-        this._saveContexts();
-        return searchResponse;
+      try {
+        const searchResponse = await Promise.race([
+          this._searchAndRespond(message, intent, personality),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), SEARCH_TIMEOUT))
+        ]);
+        if (searchResponse) {
+          console.log(`[ChatEngine] Template search succeeded`);
+          const text = typeof searchResponse === 'string' ? searchResponse : searchResponse.text;
+          this._recordHistory(message, text, personality.id);
+          this._saveContexts();
+          if (typeof searchResponse === 'string') {
+            return { text: searchResponse, searchPerformed: true, sources: null };
+          }
+          return searchResponse;
+        }
+        console.log(`[ChatEngine] Template search failed, falling through to template match`);
+      } catch (e) {
+        this._reportProgress({ state: 'timeout' });
+        console.log(`[ChatEngine] Template search timeout: ${e.message}`);
       }
-      console.log(`[ChatEngine] Template search failed, falling through to template match`);
       // 搜索失败 → 走常规模板匹配
     }
 
@@ -192,7 +233,7 @@ class ChatEngine {
     this._recordHistory(message, response, personality.id);
 
     this._saveContexts();
-    return response;
+    return { text: response, searchPerformed: false, sources: null };
   }
 
   /**
@@ -239,11 +280,15 @@ class ChatEngine {
 
   /**
    * 模板模式搜索：执行 web search → 结果经人格染色返回
+   * @returns {{text:string, searchPerformed:boolean, sources:Array}|null}
    */
   async _searchAndRespond(message, intent, personality) {
     if (!this.webSearch) return null;
 
     const terms = this._extractSearchTerms(message, intent);
+
+    // 进度：正在搜索
+    this._reportProgress({ state: 'searching', terms });
 
     // 执行搜索
     const results = intent === 'news'
@@ -252,10 +297,13 @@ class ChatEngine {
 
     if (!results || results.length === 0) return null;
 
+    // 进度：找到结果
+    this._reportProgress({ state: 'found', count: results.length });
+
     // 取第一条结果作为响应内容
     const topResult = results[0];
     const coloredText = this._colorizeSearchResult(topResult, personality);
-    return coloredText;
+    return { text: coloredText, searchPerformed: true, sources: results };
   }
 
   /**
@@ -326,8 +374,28 @@ class ChatEngine {
     if (/(搜索|搜一下|搜搜|查一下|查查|找找|查找|search|find |look up|look for|帮我查|帮我搜|帮我找|查点|搜点)/i.test(msg)) return 'search';
     if (/(新闻|热点|最新|最近|今天.*大事|今天.*新闻|发生了什么|trending|what happened|有什么新闻|什么事|啥新闻|breaking)/i.test(msg)) return 'news';
 
+    // 语义搜索意图 — 自然语言知识查询
+    if (/(是什么|为什么|怎么|如何|什么是|啥是|介绍一下|告诉我|讲一下|说说|知道.*吗|有没有|有哪些|能不能|在哪|哪家|哪个|怎么样|是什么意思|什么区别|什么关系|原理|定义|概念|教程|指南)/i.test(msg)) return 'search';
+
+    // 兜底：未匹配任何意图但消息足够长且不是纯语气词 → 可能是需要搜索的知识查询
+    const pureEmotion = /^(嗯|啊|哦|哈哈|呵呵|哎|唉|哼|嘿|喂|咦|呀|啦|嘛|呢|吧|哟|嘻嘻|嘿嘿|呜呜|哇|靠|擦|我去|牛逼|卧槽|天哪|好吧|ok|好的|行|可以|是的|对的|不是|没有|不知道|不太清楚)\b/i;
+    const hasSubstantialContent = msg.replace(/[，。！？…：；""''\\s]/g, '').length > 6;
+    if (this.webSearch && hasSubstantialContent && !pureEmotion.test(msg)) {
+      return 'default_searchable';
+    }
+
     // 默认
     return 'default';
+  }
+
+  /**
+   * 上报搜索进度到渲染进程
+   * @param {{state: string, terms?: string, count?: number}} progress
+   */
+  _reportProgress(progress) {
+    if (this._searchProgressCallback) {
+      try { this._searchProgressCallback(progress); } catch (e) { /* ignore */ }
+    }
   }
 
   // ============================================================
@@ -480,9 +548,17 @@ ${rules.join('\n')}
 
     // 检查 LLM 是否请求联网搜索（>>>SEARCH<<< 协议）
     if (response && response.startsWith('>>>SEARCH<<<') && this.webSearch) {
-      const searchTerms = response.replace('>>>SEARCH<<<', '').trim();
+      const searchTerms = response.replace(/^>>>SEARCH<<</, '').trim();
       if (searchTerms && searchTerms.length > 0) {
+        // 进度：正在搜索（LLM 请求的搜索）
+        this._reportProgress({ state: 'searching', terms: searchTerms });
+
         const results = await this.webSearch.query(searchTerms, { limit: 3 });
+
+        // 进度：找到结果（或找不到）
+        if (results && results.length > 0) {
+          this._reportProgress({ state: 'found', count: results.length });
+        }
 
         // 将搜索结果注入上下文，再次调用 LLM
         let searchContext;
@@ -493,6 +569,9 @@ ${rules.join('\n')}
           searchContext = '\n\n【网络搜索结果】没有找到相关信息。请如实告诉用户，不用编造。';
         }
 
+        // 进度：正在生成回复
+        this._reportProgress({ state: 'generating' });
+
         messages.push({ role: 'user', content: `以下是从网络搜索到的相关信息，请参考并以人格身份回答：${searchContext}` });
         const finalResponse = await this.apiConfig.callChatCompletion(messages);
         if (finalResponse) {
@@ -502,7 +581,7 @@ ${rules.join('\n')}
             ctx.apiHistory = ctx.apiHistory.slice(-this.maxApiHistoryTurns * 2);
           }
         }
-        return finalResponse || response;
+        return { text: finalResponse || response, searchPerformed: true, sources: results || [] };
       }
     }
 
@@ -514,7 +593,7 @@ ${rules.join('\n')}
         ctx.apiHistory = ctx.apiHistory.slice(-this.maxApiHistoryTurns * 2);
       }
     }
-    return response;
+    return response; // 纯字符串（无搜索时向后兼容）
   }
 
   /**
@@ -536,11 +615,22 @@ ${rules.join('\n')}
     const terms = this._extractSearchTerms(userMessage, intent);
     console.log(`[ChatEngine] _callAPIWithSearch: terms="${terms}"`);
 
+    // 进度：正在搜索
+    this._reportProgress({ state: 'searching', terms });
+
     // 执行搜索
     const results = intent === 'news'
       ? await this.webSearch.searchNews(terms, 5)
       : await this.webSearch.query(terms, { limit: 5 });
     console.log(`[ChatEngine] _callAPIWithSearch: ${results ? results.length : 0} results`);
+
+    // 进度：找到结果
+    if (results && results.length > 0) {
+      this._reportProgress({ state: 'found', count: results.length });
+    }
+
+    // 进度：正在生成回复
+    this._reportProgress({ state: 'generating' });
 
     // 构建带搜索结果的 system prompt（不带搜索能力描述，因为已触发）
     const systemPrompt = this._buildSystemPrompt(personality, false);
@@ -569,7 +659,7 @@ ${rules.join('\n')}
         ctx.apiHistory = ctx.apiHistory.slice(-this.maxApiHistoryTurns * 2);
       }
     }
-    return response;
+    return { text: response, searchPerformed: true, sources: results || [] };
   }
 
   // ============================================================

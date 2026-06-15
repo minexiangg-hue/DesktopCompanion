@@ -115,6 +115,13 @@ function enterChatMode() {
   // 通知主进程窗口调整为可交互模式
   chatMessages.innerHTML = '';
 
+  // 注册搜索进度监听器（如果尚未注册）
+  if (!_searchProgressCleanup && window.electronAPI.onChatSearchProgress) {
+    _searchProgressCleanup = window.electronAPI.onChatSearchProgress((progress) => {
+      handleSearchProgress(progress);
+    });
+  }
+
   // 开场白
   window.electronAPI.getActivePersonality().then(p => {
     if (p?.chatBehavior?.greetings) {
@@ -134,7 +141,8 @@ function exitChatMode() {
   // 恢复仅角色区域
   updateWindowShape('character');
 
-  // 通知主进程恢复穿透模式
+  // 清理未完成的思考气泡
+  _currentThinkingId = null;
 }
 
 // 发送聊天消息
@@ -152,17 +160,50 @@ chatInput.addEventListener('keydown', async (e) => {
         return;
       }
 
-      // 显示"思考中"气泡
-      const thinkingId = addThinkingBubble();
+      // 显示"正在思考"气泡
+      _currentThinkingId = addThinkingBubble('正在思考...', 'status-thinking');
+
+      // 客户端 35 秒超时（略长于主进程 30 秒）
+      const RESPONSE_TIMEOUT = 35000;
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        replaceThinkingBubble(_currentThinkingId, '宠物', '响应超时了……请稍后再试。');
+        _currentThinkingId = null;
+      }, RESPONSE_TIMEOUT);
 
       const response = await window.electronAPI.getChatResponse(msg);
+      clearTimeout(timeoutId);
+      if (timedOut) return;
+
       const personality = await window.electronAPI.getActivePersonality();
 
-      // 替换为实际回复
-      replaceThinkingBubble(thinkingId, personality?.name || '宠物', response || '……嗯？');
+      // 处理结构化响应（搜索产生 {text, searchPerformed, sources}）
+      let responseText, sources;
+      if (typeof response === 'object' && response.text) {
+        responseText = response.text;
+        sources = response.sources;
+      } else {
+        responseText = response || '……嗯？';
+        sources = null;
+      }
+
+      // 构建带来源标注的 HTML 内容
+      let contentHTML = `<span class="chat-text">${escapeHtml(responseText)}</span>`;
+      if (sources && sources.length > 0) {
+        contentHTML += '<div class="chat-sources">';
+        contentHTML += sources.map((s, i) =>
+          `<span class="chat-source" title="${escapeHtml(s.url || '')}">${escapeHtml(s.source || 'web')}</span>`
+        ).join('');
+        contentHTML += '</div>';
+      }
+
+      replaceThinkingBubbleWithHTML(_currentThinkingId, personality?.name || '宠物', contentHTML);
+      _currentThinkingId = null;
     } catch (err) {
       console.error('Chat response failed:', err);
       addChatMessage('宠物', '……出了点问题，等一下再试。', 'bot');
+      _currentThinkingId = null;
     }
   }
 });
@@ -194,16 +235,19 @@ let thinkingCounter = 0;
 
 /**
  * 插入"思考中"气泡（搜索 / LLM 调用时的 loading 状态）
+ * @param {string} [statusText='...'] - 状态文字
+ * @param {string} [statusClass=''] - 状态 CSS 类
  * @returns {number} thinkingId — 用于后续替换
  */
-function addThinkingBubble() {
+function addThinkingBubble(statusText, statusClass) {
   const id = ++thinkingCounter;
   const div = document.createElement('div');
-  div.className = 'chat-message bot thinking';
+  div.className = `chat-message bot thinking ${statusClass || ''}`;
   div.dataset.thinkingId = id;
   div.innerHTML = `
     <span class="chat-sender">宠物:</span>
     <span class="chat-text">
+      <span class="thinking-status">${statusText || '...'}</span>
       <span class="typing-dots">
         <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
       </span>
@@ -232,6 +276,83 @@ function replaceThinkingBubble(id, sender, text) {
   }
   // 没找到对应气泡，追加新消息
   addChatMessage(sender, text, 'bot');
+}
+
+/**
+ * 原地更新"思考中"气泡的状态文字和样式
+ * @param {number} id - addThinkingBubble 返回的 ID
+ * @param {string} statusText - 新状态文字
+ * @param {string} [statusClass=''] - 新 CSS 类
+ */
+function updateThinkingBubble(id, statusText, statusClass) {
+  const bubbles = chatMessages.querySelectorAll('.chat-message.bot.thinking');
+  for (const bubble of bubbles) {
+    if (parseInt(bubble.dataset.thinkingId) === id) {
+      bubble.className = `chat-message bot thinking ${statusClass || ''}`;
+      const statusEl = bubble.querySelector('.thinking-status');
+      if (statusEl) statusEl.textContent = statusText || '...';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return;
+    }
+  }
+}
+
+let _currentThinkingId = null;
+let _searchProgressCleanup = null;
+
+/**
+ * 搜索进度路由：根据主进程发来的进度更新 UI 气泡
+ * @param {{state:string, terms?:string, count?:number}} progress
+ */
+function handleSearchProgress(progress) {
+  if (!_currentThinkingId) return;
+  switch (progress.state) {
+    case 'searching':
+      updateThinkingBubble(_currentThinkingId, '正在搜索: ' + (progress.terms || '...'), 'status-searching');
+      break;
+    case 'found':
+      updateThinkingBubble(_currentThinkingId, '找到 ' + progress.count + ' 条结果，正在整理...', 'status-found');
+      break;
+    case 'generating':
+      updateThinkingBubble(_currentThinkingId, '正在生成回复...', 'status-generating');
+      break;
+    case 'timeout':
+      updateThinkingBubble(_currentThinkingId, '搜索超时', 'status-timeout');
+      break;
+  }
+}
+
+/**
+ * HTML 实体转义
+ */
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/**
+ * 替换"思考中"气泡为带 HTML 内容的实际回复（支持来源标签等）
+ * @param {number} id - addThinkingBubble 返回的 ID
+ * @param {string} sender - 发送者名称
+ * @param {string} htmlContent - HTML 内容
+ */
+function replaceThinkingBubbleWithHTML(id, sender, htmlContent) {
+  const bubbles = chatMessages.querySelectorAll('.chat-message.bot.thinking');
+  for (const bubble of bubbles) {
+    if (parseInt(bubble.dataset.thinkingId) === id) {
+      bubble.className = 'chat-message bot';
+      bubble.innerHTML = `<span class="chat-sender">${escapeHtml(sender)}:</span> ${htmlContent}`;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return;
+    }
+  }
+  // 没找到对应气泡，追加新消息
+  const div = document.createElement('div');
+  div.className = 'chat-message bot';
+  div.innerHTML = `<span class="chat-sender">${escapeHtml(sender)}:</span> ${htmlContent}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // ============================================================

@@ -29,6 +29,7 @@ const ChatEngine = require('./src/js/chat-engine');
 const UserPreferences = require('./src/js/user-preferences');
 const AvataraIntegration = require('./src/js/avatar-integration');
 const ApiConfig = require('./src/js/api-config');
+const WebSearch = require('./src/js/web-search');
 
 // ============================================================
 // 模块引用
@@ -40,6 +41,7 @@ let chatEngine = null;
 let userPrefs = null;
 let avataraIntegration = null;
 let apiConfig = null;
+let webSearch = null;
 
 // ============================================================
 // 窗口状态
@@ -297,7 +299,11 @@ ipcMain.handle('daily:getSurprise', async () => {
 // ============================================================
 ipcMain.handle('chat:respond', async (_event, message) => {
   if (!chatEngine) return '（暂时无法回应）';
-  return chatEngine.respond(message);
+  return chatEngine.respond(message, (progress) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('chat:searchProgress', progress);
+    }
+  });
 });
 
 // ============================================================
@@ -425,15 +431,20 @@ app.whenReady().then(() => {
   avataraIntegration.init(__dirname);
 
   // ============================================================
-  // 内容抓取器初始化（依赖人格调度器）
+  // WebSearch 搜索引擎初始化
   // ============================================================
-  contentFetcher = new ContentFetcher(DATA_DIR, personalityScheduler);
+  webSearch = new WebSearch(DATA_DIR);
+
+  // ============================================================
+  // 内容抓取器初始化（依赖人格调度器 + 搜索引擎）
+  // ============================================================
+  contentFetcher = new ContentFetcher(DATA_DIR, personalityScheduler, webSearch);
   contentFetcher.init();
 
   // ============================================================
-  // 聊天引擎初始化（依赖人格调度器 + 睡眠调度器 + 偏好）
+  // 聊天引擎初始化（依赖人格调度器 + 睡眠调度器 + 偏好 + 搜索引擎）
   // ============================================================
-  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs, apiConfig, null, DATA_DIR);
+  chatEngine = new ChatEngine(personalityScheduler, sleepScheduler, userPrefs, apiConfig, webSearch, DATA_DIR);
   chatEngine.init();
 });
 

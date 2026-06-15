@@ -472,3 +472,52 @@ body[data-sleep-state="drowsy"] #status-indicator {
     opacity: 1;
   }
 }
+
+/* ============================================================ */
+/* 搜索状态气泡
+/* ============================================================ */
+
+.chat-message.bot.thinking.status-searching {
+  border-left: 3px solid #FBBF24;
+}
+.chat-message.bot.thinking.status-found {
+  border-left: 3px solid #4ADE80;
+}
+.chat-message.bot.thinking.status-generating {
+  border-left: 3px solid #60A5FA;
+}
+.chat-message.bot.thinking.status-timeout {
+  border-left: 3px solid #F87171;
+}
+
+.thinking-status {
+  font-size: 11px;
+  color: #6B7280;
+  margin-right: 4px;
+}
+
+/* ============================================================ */
+/* 搜索来源标注
+/* ============================================================ */
+
+.chat-sources {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 10px;
+  flex-wrap: wrap;
+}
+
+.chat-source {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #E5E7EB;
+  color: #6B7280;
+  cursor: default;
+}
+
+.chat-source[title]:not([title=""]) {
+  cursor: pointer;
+  text-decoration: underline dotted;
+}

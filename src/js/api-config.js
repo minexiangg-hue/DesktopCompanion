@@ -28,7 +28,7 @@ class ApiConfig {
       apiKey: '',
       model: 'deepseek-chat',
       temperature: 0.8,
-      maxTokens: 200,
+      maxTokens: 400,
     });
     return this;
   }

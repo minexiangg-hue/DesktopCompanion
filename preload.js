@@ -107,4 +107,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('settings:open', handler);
     return () => ipcRenderer.removeListener('settings:open', handler);
   },
+
+  /** 搜索进度通知（searching → found → generating → timeout） */
+  onChatSearchProgress: (callback) => {
+    const handler = (_event, progress) => callback(progress);
+    ipcRenderer.on('chat:searchProgress', handler);
+    return () => ipcRenderer.removeListener('chat:searchProgress', handler);
+  },
 });
