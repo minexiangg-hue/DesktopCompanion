@@ -350,6 +350,13 @@ class ChatEngine {
     if (/(开心|好开心|高兴|快乐|happy|glad|wonderful)/i.test(msg)) return 'happy';
     if (/(好烦|烦躁|烦死了|annoyed|frustrated|烦)/i.test(msg)) return 'annoyed';
 
+    // 搜索意图 — 快速通道关键词预检（必须在互动意图之前，确保搜索关键词优先）
+    if (/(搜索|搜一下|搜搜|查一下|查查|找找|查找|search|find |look up|look for|帮我查|帮我搜|帮我找|查点|搜点)/i.test(msg)) return 'search';
+    if (/(新闻|热点|最新|今天.*新闻|发生了什么|trending|what happened|有什么新闻|啥新闻|breaking)/i.test(msg)) return 'news';
+
+    // 语义搜索意图 — 自然语言知识查询（排除主观评价类提问）
+    if (/(是什么|为什么|怎么实现|如何做|什么是|啥是|介绍一下|告诉我.*是|讲一下.*是|说说.*是|知道.*吗|有没有|有哪些|能不能|在哪|哪家|哪个|什么是|是什么意思|什么区别|什么关系|原理|定义|概念|教程|指南|技术难点|怎样做|怎么做)/i.test(msg)) return 'search';
+
     // 日常
     if (/(天气|下雨|下雪|晴天|weather|rain|sunny)/i.test(msg)) return 'weather';
     if (/(走了|再见|拜拜|bye|see you|出门|去上班)/i.test(msg)) return 'leaving';
@@ -358,8 +365,8 @@ class ChatEngine {
     if (/(周末|周六|周日|weekend|friday)/i.test(msg)) return 'weekend';
     if (/(下班|off work|finish work|收工)/i.test(msg)) return 'offwork';
 
-    // 互动
-    if (/(推荐|推荐什么|有什么好|suggest|recommend)/i.test(msg)) return 'recommend';
+    // 互动（搜索相关意图已在前方优先处理）
+    if (/(推荐|推荐什么|suggest|recommend)/i.test(msg)) return 'recommend';
     if (/(可爱|cute|adorable)/i.test(msg)) return 'cute';
     if (/(笨|stupid|笨蛋|傻瓜)/i.test(msg)) return 'stupid';
     if (/(你在干嘛|做什么|what are you|忙什么)/i.test(msg)) return 'whatdoing';
@@ -367,20 +374,20 @@ class ChatEngine {
     if (/(笑话|joke|讲一个|乐一个)/i.test(msg)) return 'joke';
     if (/(安静|quiet|silent|不说话|沉默)/i.test(msg)) return 'quiet';
     if (/(无聊|bored|没意思)/i.test(msg)) return 'bored';
-    if (/(大事|achievement|了不起|厉害了|做了件)/i.test(msg)) return 'achievement';
+    if (/(大事|了不起|厉害了|做了件)/i.test(msg)) return 'achievement';
     if (/(好闲|摸鱼|slacking|偷懒)/i.test(msg)) return 'slacking';
 
-    // 搜索意图 — 快速通道关键词预检
-    if (/(搜索|搜一下|搜搜|查一下|查查|找找|查找|search|find |look up|look for|帮我查|帮我搜|帮我找|查点|搜点)/i.test(msg)) return 'search';
-    if (/(新闻|热点|最新|最近|今天.*大事|今天.*新闻|发生了什么|trending|what happened|有什么新闻|什么事|啥新闻|breaking)/i.test(msg)) return 'news';
-
-    // 语义搜索意图 — 自然语言知识查询
-    if (/(是什么|为什么|怎么|如何|什么是|啥是|介绍一下|告诉我|讲一下|说说|知道.*吗|有没有|有哪些|能不能|在哪|哪家|哪个|怎么样|是什么意思|什么区别|什么关系|原理|定义|概念|教程|指南)/i.test(msg)) return 'search';
-
-    // 兜底：未匹配任何意图但消息足够长且不是纯语气词 → 可能是需要搜索的知识查询
+    // 兜底：未匹配但可能是知识查询的消息
+    // 条件严格：必须有实质内容 + 查询特征 + 非个人闲聊
     const pureEmotion = /^(嗯|啊|哦|哈哈|呵呵|哎|唉|哼|嘿|喂|咦|呀|啦|嘛|呢|吧|哟|嘻嘻|嘿嘿|呜呜|哇|靠|擦|我去|牛逼|卧槽|天哪|好吧|ok|好的|行|可以|是的|对的|不是|没有|不知道|不太清楚)\b/i;
+    const selfStatement = /(我今天|我昨天|我刚刚|我刚才|我最近|我感觉|我觉得|我好|我很好|我好困|我好饿|我.*睡|我.*累|我.*心情)/i;
+    const aboutBot = /(你喜欢|你爱|你讨厌|你.*颜色|你.*吃的|你.*电影|你.*歌|你.*书|你多大了|你几岁|你觉得我|你觉得他|你觉得她|你觉得这个人|你看我|我这个人|对我.*评价)/i;
+    const topicChange = /(不说.*了|聊点别|换个话题|算了|不聊了)/i;
+    const hasQueryIndicator = /[？?]/.test(msg) || /(吗$|呢$|吧$|是什么|有哪些|有没有|能不能|怎么样|怎么.*的|什么意思|什么区别|最近.*吗|最近.*什么|新出|新.*怎么|涨.*跌|.*原理|.*难点|.*区别)/i.test(msg);
     const hasSubstantialContent = msg.replace(/[，。！？…：；""''\\s]/g, '').length > 6;
-    if (this.webSearch && hasSubstantialContent && !pureEmotion.test(msg)) {
+    if (this.webSearch && hasSubstantialContent && !pureEmotion.test(msg)
+        && !selfStatement.test(msg) && !aboutBot.test(msg) && !topicChange.test(msg)
+        && hasQueryIndicator) {
       return 'default_searchable';
     }
 

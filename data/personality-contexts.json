@@ -90,8 +90,159 @@
         "content": "哎呀，弟弟来啦～姐姐正想你呢，快过来坐，刚泡了杯蜂蜜柚子茶，暖暖手。今天过得怎么样呀？"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 6
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "好啦好啦~",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774729
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "降温了，多穿点。感冒了我会心疼的。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774732
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "在发呆~ 脑子放空的时候也挺舒服的。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774735
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "好啦好啦~",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774737
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "吃过了吗？别饿着肚子呀，我给你煮碗面？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774739
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "有我在呢，没事的。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774741
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "慢慢来，不着急。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774743
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "慢慢来，不着急。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774744
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "你开心我就开心了~ 来，让我也沾沾喜气。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587774745
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775019
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775021
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775022
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "诶，我帮你查了一下～JavaScript。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775024
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775029
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775031
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "诶，我帮你查了一下～AI。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775032
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775033
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775035
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "诶，我帮你查了一下～SpaceX 成功上市，首日市值突破万亿。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775036
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "诶，我帮你查了一下～区块链。怎么样，有用吗？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775037
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "好啦好啦~",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775038
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "有我在呢，没事的。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775039
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "周末啦！有什么安排吗？要不要一起做点什么？",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775040
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "出门啦？注意安全，别让我担心。",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775042
+      },
+      {
+        "user": "明天见哦",
+        "bot": "好啦好啦~",
+        "personalityId": "big-sis",
+        "timestamp": 1781587775043
+      }
+    ],
+    "sessionTurnCount": 25
   },
   "trump": {
     "apiHistory": [
@@ -184,8 +335,159 @@
         "content": "Exactly what I told you! Nothing about SpaceX explosions or IPOs - just regular tech stuff! The media loves making everything sound dramatic! But I'll tell you what IS dramatic - how I always get the facts right! Nobody has better instincts than Trump!"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 17
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "You're fired!——开个玩笑。",
+        "personalityId": "trump",
+        "timestamp": 1781587775160
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "太冷了？我早就说了！他们不听我的。冷天要穿暖和的衣服——基本常识。",
+        "personalityId": "trump",
+        "timestamp": 1781587775161
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "我在思考怎么让事情变得更好——让它们重新变得伟大！",
+        "personalityId": "trump",
+        "timestamp": 1781587775163
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "没有人比我更懂——",
+        "personalityId": "trump",
+        "timestamp": 1781587775164
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "没吃呢——我们一起吃个饭怎么样？我请客——当然是我请客。",
+        "personalityId": "trump",
+        "timestamp": 1781587775166
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "Very nice!",
+        "personalityId": "trump",
+        "timestamp": 1781587775167
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "You're fired!——开个玩笑。",
+        "personalityId": "trump",
+        "timestamp": 1781587775169
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "You're fired!——开个玩笑。",
+        "personalityId": "trump",
+        "timestamp": 1781587775170
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "你知道吗，开心就会赢。不开心就输。我现在很开心，你也很开心，所以我们都在赢！",
+        "personalityId": "trump",
+        "timestamp": 1781587775171
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775176
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775178
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775179
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "Let me tell you, I searched it——JavaScript。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775181
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775183
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775184
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "Let me tell you, I searched it——AI。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775186
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775187
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775188
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "Let me tell you, I searched it——SpaceX 成功上市，首日市值突破万亿。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775189
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "Let me tell you, I searched it——区块链。Tremendous! 很多人说这是个很好的结果，Believe me!",
+        "personalityId": "trump",
+        "timestamp": 1781587775192
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "Very nice!",
+        "personalityId": "trump",
+        "timestamp": 1781587775193
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "Very nice!",
+        "personalityId": "trump",
+        "timestamp": 1781587775196
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "Great weekend coming up！你有什么计划？不管是什么，把它变得巨大！",
+        "personalityId": "trump",
+        "timestamp": 1781587775197
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "行，你去吧。记住——走出去就要赢，别给我丢人。",
+        "personalityId": "trump",
+        "timestamp": 1781587775198
+      },
+      {
+        "user": "明天见哦",
+        "bot": "Very nice!",
+        "personalityId": "trump",
+        "timestamp": 1781587775200
+      }
+    ],
+    "sessionTurnCount": 25
   },
   "tsundere-cat": {
     "apiHistory": [
@@ -198,8 +500,159 @@
         "content": "哼！我、我才不会告诉你我一直在等你回来呢！……不过既然你问了，也没什么大事啦。"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 1
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "……也不是在关心你啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775202
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "天气这么好，你是不是要出去？……那早点回来。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775203
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "没干嘛。……就是在想你怎么还不来找我。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775204
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "……也不是在关心你啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775205
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "……要、要一起吃吗？我刚好买多了。真的是买多了！",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775206
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "……也不是在关心你啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775207
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "……也不是在关心你啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775209
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "哼。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775210
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "……你笑起来还挺好看的。不是！我是说、一般般好看！",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775211
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775214
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775215
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775216
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "哼，我帮你搜了一下——JavaScript。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775217
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775219
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775220
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "哼，我帮你搜了一下——AI。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775221
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775223
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775224
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "哼，我帮你搜了一下——SpaceX 成功上市，首日市值突破万亿。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775225
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "哼，我帮你搜了一下——区块链。……也不是特地为你搜的啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775227
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "才、才不是因为你呢！",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775228
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "哼。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775230
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "周末啦！……你没有什么安排吗？那、那也别一直在家嘛。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775232
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "……早点回来。不是，我是说你耽误了工作我可不管。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775233
+      },
+      {
+        "user": "明天见哦",
+        "bot": "……也不是在关心你啦。",
+        "personalityId": "tsundere-cat",
+        "timestamp": 1781587775234
+      }
+    ],
+    "sessionTurnCount": 25
   },
   "professor": {
     "apiHistory": [
@@ -228,8 +681,159 @@
         "content": "让我想想怎么跟你解释。作为一个治学数十年的老教授，我习惯通过查阅第一手资料来获取信息，而不是依赖搜索引擎的二手信息。建议你直接访问SpaceX的官方新闻页面，那里有最权威的资讯。"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 3
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "依我看啊……",
+        "personalityId": "professor",
+        "timestamp": 1781587775085
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "下雨了。知道吗？雨滴的落地速度是有极限的，大约9米每秒。",
+        "personalityId": "professor",
+        "timestamp": 1781587775086
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "在思考一个问题：如果知识是无限的，那学习的策略应该是什么？",
+        "personalityId": "professor",
+        "timestamp": 1781587775087
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "嗯…这个问题问得好。",
+        "personalityId": "professor",
+        "timestamp": 1781587775088
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "嗯，饮食规律很重要。胃肠道的神经系统——也就是'肠脑'——会直接影响到你的情绪。",
+        "personalityId": "professor",
+        "timestamp": 1781587775089
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "让我想想怎么跟你解释。",
+        "personalityId": "professor",
+        "timestamp": 1781587775091
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "嗯…这个问题问得好。",
+        "personalityId": "professor",
+        "timestamp": 1781587775092
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "嗯…这个问题问得好。",
+        "personalityId": "professor",
+        "timestamp": 1781587775093
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "高兴是好事。情绪状态直接影响认知能力，适当的愉快能提高创造力。",
+        "personalityId": "professor",
+        "timestamp": 1781587775094
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775097
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775099
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775101
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "根据网络搜索结果——JavaScript。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775102
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775104
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775105
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "根据网络搜索结果——AI。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775106
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775107
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775108
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "根据网络搜索结果——SpaceX 成功上市，首日市值突破万亿。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775109
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "根据网络搜索结果——区块链。这一点在多个来源都有提及，应该是可信的。",
+        "personalityId": "professor",
+        "timestamp": 1781587775110
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "嗯…这个问题问得好。",
+        "personalityId": "professor",
+        "timestamp": 1781587775111
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "嗯…这个问题问得好。",
+        "personalityId": "professor",
+        "timestamp": 1781587775113
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "休息日到了。不过大脑是不会真正休息的——它只是换了种工作模式。",
+        "personalityId": "professor",
+        "timestamp": 1781587775115
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "等一下，我想到一个事要交代你……算了，等你回来再说。",
+        "personalityId": "professor",
+        "timestamp": 1781587775116
+      },
+      {
+        "user": "明天见哦",
+        "bot": "让我想想怎么跟你解释。",
+        "personalityId": "professor",
+        "timestamp": 1781587775117
+      }
+    ],
+    "sessionTurnCount": 25
   },
   "snarky-ai": {
     "apiHistory": [
@@ -314,8 +918,159 @@
         "content": "你说的是“美伊战争进程”——一个比我刚才编的“2026年马斯克火星度假”还虚无缥缈的话题。……看来你的记忆力和你的搜索请求一样，需要及时更新缓存了。"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 10
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "……你的智商今天不在线吗？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775120
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "热死了。全球变暖的功劳有你一份。不用谢。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775121
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "在等你问一个值得我回答的问题——显然我还在等。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775122
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "哦？这就是你最好的水平？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775123
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "吃饭是人类为数不多正确的决定——你最好把这个决定做了。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775123
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "……你的智商今天不在线吗？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775125
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "哦？这就是你最好的水平？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775126
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "……你的智商今天不在线吗？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775127
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "你的快乐来得真容易——我开始羡慕你了。不是，我只是讽刺你。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775129
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775133
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775134
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775135
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——JavaScript。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775137
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775138
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775140
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——AI。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775142
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775143
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775146
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——SpaceX 成功上市，首日市值突破万亿。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775148
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "好吧，我用我无所不能的网络搜索能力查了一下——区块链。满意了吧？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775149
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "我配合一下假装被冒犯到了。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775151
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "……你的智商今天不在线吗？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775152
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "周末意味着你不用假装自己在忙了——反正你平时也没在忙。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775154
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "走了哦？注意安全——虽然我觉得你最大的风险是被自己绊倒。",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775155
+      },
+      {
+        "user": "明天见哦",
+        "bot": "……你的智商今天不在线吗？",
+        "personalityId": "snarky-ai",
+        "timestamp": 1781587775157
+      }
+    ],
+    "sessionTurnCount": 25
   },
   "joker": {
     "apiHistory": [
@@ -368,7 +1123,158 @@
         "content": "哇哦！2026年的SpaceX可没闲着——他们刚在7月完成了第10次星舰轨道试飞，成功回收了超重助推器！马斯克还宣布“星舰2.0”将在2027年载货前往火星，不过时间表嘛……就像小丑的假鼻子，永远会掉下来一次！严肃？那是死人才干的事，这场太空马戏团才刚开场呢！"
       }
     ],
-    "conversationHistory": [],
-    "sessionTurnCount": 6
+    "conversationHistory": [
+      {
+        "user": "你好呀",
+        "bot": "生活就是个笑话！",
+        "personalityId": "joker",
+        "timestamp": 1781587775049
+      },
+      {
+        "user": "今天天气真好啊",
+        "bot": "下雪了！看，天空在撒盐！晚餐有着落了！",
+        "personalityId": "joker",
+        "timestamp": 1781587775049
+      },
+      {
+        "user": "你今天在做什么呢",
+        "bot": "在数空气里有几个笑点。目前计数：零。很无聊。",
+        "personalityId": "joker",
+        "timestamp": 1781587775050
+      },
+      {
+        "user": "我昨天晚上睡得特别好",
+        "bot": "生活就是个笑话！",
+        "personalityId": "joker",
+        "timestamp": 1781587775052
+      },
+      {
+        "user": "你吃饭了吗",
+        "bot": "吃过了？吃了什么好东西？说给我解解馋！",
+        "personalityId": "joker",
+        "timestamp": 1781587775053
+      },
+      {
+        "user": "我今天心情特别好",
+        "bot": "严肃？那是死人才干的事。",
+        "personalityId": "joker",
+        "timestamp": 1781587775054
+      },
+      {
+        "user": "哈哈哈你好好玩",
+        "bot": "嘻嘻~",
+        "personalityId": "joker",
+        "timestamp": 1781587775056
+      },
+      {
+        "user": "最近工作压力好大啊",
+        "bot": "生活就是个笑话！",
+        "personalityId": "joker",
+        "timestamp": 1781587775057
+      },
+      {
+        "user": "有没有什么开心的事可以分享一下",
+        "bot": "开心的你是最好的你！第二好的是正在笑的你！",
+        "personalityId": "joker",
+        "timestamp": 1781587775059
+      },
+      {
+        "user": "你觉得我这个人怎么样",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775060
+      },
+      {
+        "user": "帮我搜索一下最新的科技新闻",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775061
+      },
+      {
+        "user": "查一下量子计算是什么",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775062
+      },
+      {
+        "user": "帮我找找Python和JavaScript的区别",
+        "bot": "HAHAHA！你猜我发现了什么——JavaScript！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775063
+      },
+      {
+        "user": "搜一下最近有什么好电影",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775065
+      },
+      {
+        "user": "帮我查查今天有什么新闻大事",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775068
+      },
+      {
+        "user": "最近AI圈有什么新鲜事吗",
+        "bot": "HAHAHA！你猜我发现了什么——AI！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775070
+      },
+      {
+        "user": "那个新出的Apple Vision Pro到底怎么样啊",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775071
+      },
+      {
+        "user": "量子纠缠是什么原理，能简单讲讲吗",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775072
+      },
+      {
+        "user": "人类登陆火星的技术难点主要有哪些",
+        "bot": "HAHAHA！你猜我发现了什么——SpaceX 成功上市，首日市值突破万亿！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775074
+      },
+      {
+        "user": "比特币最近涨了还是跌了",
+        "bot": "HAHAHA！你猜我发现了什么——区块链！这个世界总是充满惊喜，你不觉得吗？",
+        "personalityId": "joker",
+        "timestamp": 1781587775076
+      },
+      {
+        "user": "好了不说这些了，聊点别的吧",
+        "bot": "嘻嘻~",
+        "personalityId": "joker",
+        "timestamp": 1781587775077
+      },
+      {
+        "user": "你喜欢什么颜色",
+        "bot": "严肃？那是死人才干的事。",
+        "personalityId": "joker",
+        "timestamp": 1781587775078
+      },
+      {
+        "user": "周末有什么好玩的推荐吗",
+        "bot": "周末万岁！不用假装正经的日子来了！",
+        "personalityId": "joker",
+        "timestamp": 1781587775081
+      },
+      {
+        "user": "我要去上班了，拜拜",
+        "bot": "记得带伞——不管晴天还是雨天，都是很好的道具！",
+        "personalityId": "joker",
+        "timestamp": 1781587775081
+      },
+      {
+        "user": "明天见哦",
+        "bot": "生活就是个笑话！",
+        "personalityId": "joker",
+        "timestamp": 1781587775082
+      }
+    ],
+    "sessionTurnCount": 25
   }
 }
