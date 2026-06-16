@@ -1,40 +1,38 @@
 /**
- * web-search.js — 网络搜索模块
+ * web-search.js — 网络搜索模块 (Brave Search API)
  *
- * 免 Key 公开 API 搜索，被 ContentFetcher（每日惊喜）和 ChatEngine（聊天搜索）共用。
+ * 使用 Brave Search API 作为主后端，中英文通用。
+ * 被 ContentFetcher（每日惊喜）和 ChatEngine（聊天搜索）共用。
  *
- * 后端池：
- *   - Wikipedia OpenSearch（事实查询，自动中英文切换）
- *   - Reddit JSON API（实时讨论/新闻 — 仅英文）
- *   - HN Algolia（科技热点 — 仅英文）
- *   - 本地知识库 + 热点兜底
+ * 后端：
+ *   - Brave Web Search   — 通用网页搜索
+ *   - Brave News Search   — 新闻实时搜索
+ *   - 本地知识库           — 网络不可用时的兜底
  *
  * 使用方式：
- *   const ws = new WebSearch(dataDir);
- *   const results = await ws.query('人工智能 新闻');
+ *   const ws = new WebSearch(dataDir, braveApiKey);
+ *   const results = await ws.query('人工智能');
  *   const hot = await ws.trending();
- *   const news = await ws.searchNews('AI');
+ *   const news = await ws.searchNews('AI', 5);
  */
 
 const https = require('https');
-const http = require('http');
 const path = require('path');
 const fs = require('fs');
 
+// ============================================================
+// Brave Search API 常量
+// ============================================================
+const BRAVE_WEB_API = 'https://api.search.brave.com/res/v1/web/search';
+const BRAVE_NEWS_API = 'https://api.search.brave.com/res/v1/news/search';
+
 class WebSearch {
-  constructor(dataDir) {
+  constructor(dataDir, braveApiKey) {
     this.dataDir = dataDir;
+    this.braveApiKey = braveApiKey || '';
     this.cacheFile = dataDir ? path.join(dataDir, 'search-cache.json') : null;
     this.cache = {};
     this._loadCache();
-  }
-
-  // ============================================================
-  // 语言检测
-  // ============================================================
-
-  _hasChinese(text) {
-    return /[一-鿿]/.test(text);
   }
 
   // ============================================================
@@ -42,24 +40,16 @@ class WebSearch {
   // ============================================================
 
   /**
-   * 通用搜索：并行查所有后端，合并去重后返回
+   * 通用搜索 — Brave Web Search
    * @param {string} terms - 搜索词
-   * @param {object} [opts] - { limit: 3, sources: ['wikipedia','reddit','hn'] }
+   * @param {object} [opts] - { limit: 5, freshness: 'pw'|'pm'|'py' }
    * @returns {Promise<Array<{title, snippet, url, source}>>}
    */
   async query(terms, opts = {}) {
-    const limit = opts.limit || 3;
-    let sources = opts.sources || ['wikipedia', 'reddit', 'hn'];
+    const limit = opts.limit || 5;
 
     if (!terms || !terms.trim()) {
       return this.trending({ limit });
-    }
-
-    // 中文搜索：跳过 Reddit/HN（英文内容为主），走中文 Wikipedia + 本地
-    // searchNews 场景设置 skipLanguageFilter=true 则不跳过
-    const isChinese = this._hasChinese(terms);
-    if (isChinese && !opts.skipLanguageFilter) {
-      sources = sources.filter(s => s === 'wikipedia');
     }
 
     // 检查缓存
@@ -67,43 +57,44 @@ class WebSearch {
     const cached = this._getCache(cacheKey);
     if (cached) return cached;
 
-    const promises = [];
-    if (sources.includes('wikipedia')) {
-      promises.push(this._searchWikipedia(terms, limit, isChinese));
-    }
-    if (sources.includes('reddit')) {
-      promises.push(this._searchReddit(terms, limit));
-    }
-    if (sources.includes('hn')) {
-      promises.push(this._searchHN(terms, limit));
-    }
+    let results = [];
 
-    const results = await Promise.allSettled(promises);
-    const merged = [];
-    for (const r of results) {
-      if (r.status === 'fulfilled' && r.value) {
-        merged.push(...r.value);
+    if (this.braveApiKey) {
+      const params = new URLSearchParams({
+        q: terms,
+        count: String(Math.min(limit + 2, 10)),
+        search_lang: this._hasChinese(terms) ? 'zh' : 'en',
+      });
+      if (opts.freshness) params.set('freshness', opts.freshness);
+
+      const data = await this._braveGet(`${BRAVE_WEB_API}?${params}`);
+      if (data?.web?.results) {
+        results = data.web.results.map(r => ({
+          title: r.title || '',
+          snippet: r.description || '',
+          url: r.url || '',
+          source: 'brave',
+        })).filter(r => r.title);
       }
     }
 
-    // 所有远程后端失败 → 本地知识库 → 预设热点兜底
-    if (merged.length === 0) {
+    // 网络不可用 → 本地知识库 → 热点兜底
+    if (results.length === 0) {
       const local = this._searchLocal(terms);
-      merged.push(...local);
-      if (merged.length === 0) {
-        merged.push(...this._trendingFallback());
+      results.push(...local);
+      if (results.length === 0) {
+        results.push(...this._trendingFallback());
       }
     }
 
-    const deduped = this._dedupe(merged, limit);
+    const deduped = this._dedupe(results, limit);
     this._setCache(cacheKey, deduped, 10 * 60 * 1000);
     return deduped;
   }
 
   /**
-   * 拉取当前热门话题（供每日惊喜无搜索词时用）
+   * 热门话题 — Brave News Search（无搜索词时）
    * @param {object} [opts] - { limit: 5 }
-   * @returns {Promise<Array<{title, snippet, url, source}>>}
    */
   async trending(opts = {}) {
     const limit = opts.limit || 5;
@@ -111,202 +102,131 @@ class WebSearch {
     const cached = this._getCache('trending');
     if (cached) return cached;
 
-    const [reddit, hn] = await Promise.allSettled([
-      this._trendingReddit(limit),
-      this._trendingHN(limit),
-    ]);
+    let results = [];
 
-    const merged = [];
-    if (reddit.status === 'fulfilled' && reddit.value) merged.push(...reddit.value);
-    if (hn.status === 'fulfilled' && hn.value) merged.push(...hn.value);
-
-    // 远程后端都失败 → 预设热点兜底
-    if (merged.length === 0) {
-      merged.push(...this._trendingFallback());
+    if (this.braveApiKey) {
+      const params = new URLSearchParams({
+        q: 'top news',
+        count: String(Math.min(limit + 2, 10)),
+        freshness: 'pd',
+      });
+      const data = await this._braveGet(`${BRAVE_NEWS_API}?${params}`);
+      if (data?.results) {
+        results = data.results.map(r => ({
+          title: r.title || '',
+          snippet: r.description || '',
+          url: r.url || '',
+          source: 'brave-news',
+        })).filter(r => r.title);
+      }
     }
 
-    const deduped = this._dedupe(merged, limit);
+    if (results.length === 0) {
+      results.push(...this._trendingFallback());
+    }
+
+    const deduped = this._dedupe(results, limit);
     this._setCache('trending', deduped, 30 * 60 * 1000);
     return deduped;
   }
 
   /**
-   * 仅搜索新闻类内容（Reddit + HN，时间倒序，不调 Wikipedia）
-   *
-   * 不走 query() 的通用路径，因为新闻搜索需要：
-   * - 时间倒序（最新优先）而非热度排序
-   * - 不经过滤（中文也搜 Reddit/HN，英文结果比没有好）
-   * - 不要 Wikipedia（百科知识不是新闻）
-   *
+   * 新闻搜索 — Brave News Search（时间优先）
    * @param {string} terms - 搜索词
-   * @param {number} [limit=3]
-   * @returns {Promise<Array<{title, snippet, url, source}>>}
+   * @param {number} [limit=5]
    */
-  async searchNews(terms, limit = 3) {
+  async searchNews(terms, limit = 5) {
     if (!terms || !terms.trim()) return this.trending({ limit });
 
     const cacheKey = `news:${terms.toLowerCase().trim()}`;
     const cached = this._getCache(cacheKey);
     if (cached) return cached;
 
-    const [reddit, hn] = await Promise.allSettled([
-      this._searchRedditNews(terms, limit),
-      this._searchHNNew(terms, limit),
-    ]);
+    let results = [];
 
-    const merged = [];
-    if (reddit.status === 'fulfilled' && reddit.value) merged.push(...reddit.value);
-    if (hn.status === 'fulfilled' && hn.value) merged.push(...hn.value);
-
-    // 没搜到 → trending 兜底
-    if (merged.length === 0) {
-      merged.push(...this._trendingFallback());
+    if (this.braveApiKey) {
+      const params = new URLSearchParams({
+        q: terms,
+        count: String(Math.min(limit + 2, 10)),
+        freshness: 'pd',  // past day
+      });
+      const data = await this._braveGet(`${BRAVE_NEWS_API}?${params}`);
+      if (data?.results) {
+        results = data.results.map(r => ({
+          title: r.title || '',
+          snippet: r.description || '',
+          url: r.url || '',
+          source: 'brave-news',
+        })).filter(r => r.title);
+      }
     }
 
-    const deduped = this._dedupe(merged, limit);
-    this._setCache(cacheKey, deduped, 3 * 60 * 1000); // 3 min cache — 新闻换得快
+    if (results.length === 0) {
+      // 新闻无本地知识库，直接热点兜底
+      results.push(...this._trendingFallback());
+    }
+
+    const deduped = this._dedupe(results, limit);
+    this._setCache(cacheKey, deduped, 3 * 60 * 1000);
     return deduped;
   }
 
   // ============================================================
-  // Wikipedia OpenSearch（支持中英文）
+  // Brave Search HTTP 调用
   // ============================================================
 
-  async _searchWikipedia(terms, limit, isChinese) {
-    const wikiDomain = isChinese ? 'zh.wikipedia.org' : 'en.wikipedia.org';
-    const url = `https://${wikiDomain}/w/api.php?action=opensearch&search=${encodeURIComponent(terms)}&limit=${limit}&namespace=0&format=json&origin=*`;
-    const data = await this._httpGetJSON(url);
-    if (!data || !Array.isArray(data) || data.length < 3) return [];
+  async _braveGet(url) {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(null), 8000);
 
-    const titles = data[1] || [];
-    const descriptions = data[2] || [];
-    const urls = data[3] || [];
+      try {
+        const parsed = new URL(url);
+        const options = {
+          hostname: parsed.hostname,
+          port: 443,
+          path: parsed.pathname + parsed.search,
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Subscription-Token': this.braveApiKey,
+          },
+          timeout: 6000,
+        };
 
-    return titles.slice(0, limit).map((title, i) => ({
-      title,
-      snippet: descriptions[i] || '',
-      url: urls[i] || '',
-      source: 'wikipedia',
-    }));
+        const req = https.request(options, (res) => {
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            clearTimeout(timeout);
+            resolve(null);
+            return;
+          }
+          let data = '';
+          res.on('data', (chunk) => data += chunk);
+          res.on('end', () => {
+            clearTimeout(timeout);
+            try {
+              resolve(JSON.parse(data));
+            } catch {
+              resolve(null);
+            }
+          });
+        });
+
+        req.on('error', () => { clearTimeout(timeout); resolve(null); });
+        req.on('timeout', () => { req.destroy(); clearTimeout(timeout); resolve(null); });
+        req.end();
+      } catch {
+        clearTimeout(timeout);
+        resolve(null);
+      }
+    });
   }
 
   // ============================================================
-  // Reddit JSON API
-  // ============================================================
-
-  async _searchReddit(terms, limit) {
-    const url = `https://www.reddit.com/r/all/search.json?q=${encodeURIComponent(terms)}&sort=top&limit=${limit}&restrict_sr=off&t=month`;
-    const data = await this._httpGetJSON(url, { headers: { 'User-Agent': 'DesktopCompanion/1.0' } });
-    if (!data || !data.data || !data.data.children) return [];
-
-    return data.data.children.slice(0, limit).map(child => {
-      const d = child.data || {};
-      return {
-        title: d.title || '',
-        snippet: (d.selftext || '').substring(0, 200),
-        url: `https://www.reddit.com${d.permalink || ''}`,
-        source: 'reddit',
-        subreddit: d.subreddit || '',
-      };
-    }).filter(r => r.title);
-  }
-
-  async _trendingReddit(limit) {
-    const url = 'https://www.reddit.com/r/news/hot.json?limit=15';
-    const data = await this._httpGetJSON(url, { headers: { 'User-Agent': 'DesktopCompanion/1.0' } });
-    if (!data || !data.data || !data.data.children) return [];
-
-    return data.data.children.slice(0, limit).map(child => {
-      const d = child.data || {};
-      return {
-        title: d.title || '',
-        snippet: (d.selftext || '').substring(0, 200),
-        url: `https://www.reddit.com${d.permalink || ''}`,
-        source: 'reddit',
-        subreddit: d.subreddit || '',
-      };
-    }).filter(r => r.title);
-  }
-
-  // ============================================================
-  // HN Algolia API
-  // ============================================================
-
-  async _searchHN(terms, limit) {
-    const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(terms)}&tags=story&hitsPerPage=${limit}`;
-    const data = await this._httpGetJSON(url);
-    if (!data || !data.hits) return [];
-
-    return data.hits.slice(0, limit).map(hit => ({
-      title: hit.title || '',
-      snippet: `♨ ${hit.points || 0} points | by ${hit.author || 'anon'} | ${hit.num_comments || 0} comments`,
-      url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-      source: 'hackernews',
-    })).filter(r => r.title);
-  }
-
-  async _trendingHN(limit) {
-    const url = `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${limit}`;
-    const data = await this._httpGetJSON(url);
-    if (!data || !data.hits) return [];
-
-    return data.hits.slice(0, limit).map(hit => ({
-      title: hit.title || '',
-      snippet: `♨ ${hit.points || 0} points | by ${hit.author || 'anon'} | ${hit.num_comments || 0} comments`,
-      url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-      source: 'hackernews',
-    })).filter(r => r.title);
-  }
-
-  // ============================================================
-  // 实时新闻搜索（时间倒序）
-  // ============================================================
-
-  /**
-   * Reddit 新闻搜索 — r/news 限定 + 按新排序 + 今日
-   */
-  async _searchRedditNews(terms, limit) {
-    const url = `https://www.reddit.com/r/news/search.json?q=${encodeURIComponent(terms)}&sort=new&limit=${limit}&restrict_sr=on&t=day`;
-    const data = await this._httpGetJSON(url, { headers: { 'User-Agent': 'DesktopCompanion/1.0' } });
-    if (!data || !data.data || !data.data.children) return [];
-
-    return data.data.children.slice(0, limit).map(child => {
-      const d = child.data || {};
-      return {
-        title: d.title || '',
-        snippet: (d.selftext || '').substring(0, 200),
-        url: `https://www.reddit.com${d.permalink || ''}`,
-        source: 'reddit',
-        subreddit: d.subreddit || '',
-      };
-    }).filter(r => r.title);
-  }
-
-  /**
-   * HN 新闻搜索 — 最近 24h + 按日期排序
-   */
-  async _searchHNNew(terms, limit) {
-    // 24 小时前的时间戳
-    const oneDayAgo = Math.floor(Date.now() / 1000) - 86400;
-    const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(terms)}&tags=story&hitsPerPage=${limit}&numericFilters=created_at_i>${oneDayAgo}`;
-    const data = await this._httpGetJSON(url);
-    if (!data || !data.hits) return [];
-
-    return data.hits.slice(0, limit).map(hit => ({
-      title: hit.title || '',
-      snippet: `♨ ${hit.points || 0} points | by ${hit.author || 'anon'} | ${hit.num_comments || 0} comments`,
-      url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-      source: 'hackernews',
-    })).filter(r => r.title);
-  }
-
-  // ============================================================
-  // 本地知识库（兜底）
+  // 本地知识库（兜底 — 网络完全不可用时）
   // ============================================================
 
   _searchLocal(terms) {
     const lower = terms.toLowerCase();
-    // 中文和英文都匹配
     const matches = this._getLocalKnowledge().filter(item =>
       item.title.toLowerCase().includes(lower) ||
       item.snippet.toLowerCase().includes(lower) ||
@@ -323,7 +243,6 @@ class WebSearch {
       { title: 'Electron', snippet: '使用 JavaScript、HTML 和 CSS 构建跨平台桌面应用的框架。', keywords: ['electron', '跨平台', '桌面'], source: 'local' },
       { title: 'Node.js', snippet: '基于 Chrome V8 引擎的 JavaScript 运行时环境。', keywords: ['node', 'nodejs', '运行时', '后端'], source: 'local' },
       { title: 'React', snippet: '用于构建用户界面的 JavaScript 库，由 Meta 维护。', keywords: ['react', '前端', 'ui', '界面'], source: 'local' },
-      { title: 'Vue.js', snippet: '一款渐进式 JavaScript 框架，用于构建用户界面。', keywords: ['vue', 'vuejs', '前端'], source: 'local' },
       { title: 'AI', snippet: 'Artificial Intelligence — 人工智能，计算机科学的重要分支。', keywords: ['ai', '人工智能', 'artificial intelligence'], source: 'local' },
       { title: 'LLM', snippet: 'Large Language Model — 大语言模型，如 GPT、Claude、DeepSeek。', keywords: ['llm', '大语言模型', '大模型', 'gpt', 'claude', 'deepseek'], source: 'local' },
       { title: '机器学习', snippet: '人工智能的子领域，让系统从数据中学习和改进。', keywords: ['机器学习', 'machine learning', 'ml'], source: 'local' },
@@ -332,16 +251,17 @@ class WebSearch {
       { title: '云计算', snippet: '通过互联网提供计算资源（服务器、存储、数据库等）的服务模式。', keywords: ['云计算', 'cloud', '云服务', 'aws', 'azure'], source: 'local' },
       { title: 'Docker', snippet: '容器化平台，让应用程序及其依赖打包在轻量级容器中运行。', keywords: ['docker', '容器', 'container'], source: 'local' },
       { title: 'Git', snippet: '分布式版本控制系统，广泛用于源代码管理。', keywords: ['git', 'github', '版本控制', '代码管理'], source: 'local' },
+      { title: '量子计算', snippet: '利用量子力学原理进行计算的新型计算范式，有望在特定问题上超越经典计算机。', keywords: ['量子', 'quantum', '量子计算机', '量子比特', 'qubit'], source: 'local' },
     ];
   }
 
   // ============================================================
-  // 预设热点兜底（当所有网络后端都失败时使用）
+  // 兜底热点
   // ============================================================
 
   _trendingFallback() {
     const items = [
-      { title: 'SpaceX 成功上市，首日市值突破万亿', snippet: '航天商业化的里程碑时刻', url: '', source: 'local' },
+      { title: 'SpaceX 成功发射新一代星舰', snippet: '航天商业化的里程碑时刻', url: '', source: 'local' },
       { title: 'AI 芯片竞争白热化，多家厂商发布新一代产品', snippet: '科技巨头争夺AI算力高地', url: '', source: 'local' },
       { title: '全球气温持续升高，多国加速部署可再生能源', snippet: '气候行动成为各国优先议题', url: '', source: 'local' },
       { title: '新一代大语言模型发布，推理能力跃上新台阶', snippet: 'AI 能力持续突破瓶颈', url: '', source: 'local' },
@@ -353,8 +273,12 @@ class WebSearch {
   }
 
   // ============================================================
-  // 去重与排序
+  // 工具方法
   // ============================================================
+
+  _hasChinese(text) {
+    return /[一-鿿]/.test(text);
+  }
 
   _dedupe(results, limit) {
     const seen = new Set();
@@ -405,42 +329,6 @@ class WebSearch {
     } catch (e) {
       // 静默失败
     }
-  }
-
-  // ============================================================
-  // HTTP 工具（与 content-fetcher 保持一致）
-  // ============================================================
-
-  _httpGetJSON(url, opts = {}) {
-    return new Promise((resolve) => {
-      const timeout = setTimeout(() => resolve(null), 6000);
-
-      const proto = url.startsWith('https') ? https : http;
-      try {
-        const req = proto.get(url, { headers: opts.headers || {}, timeout: 5000 }, (res) => {
-          if (res.statusCode < 200 || res.statusCode >= 300) {
-            clearTimeout(timeout);
-            resolve(null);
-            return;
-          }
-          let data = '';
-          res.on('data', (chunk) => data += chunk);
-          res.on('end', () => {
-            clearTimeout(timeout);
-            try {
-              resolve(JSON.parse(data));
-            } catch {
-              resolve(null);
-            }
-          });
-        });
-        req.on('error', () => { clearTimeout(timeout); resolve(null); });
-        req.on('timeout', () => { req.destroy(); clearTimeout(timeout); resolve(null); });
-      } catch {
-        clearTimeout(timeout);
-        resolve(null);
-      }
-    });
   }
 }
 

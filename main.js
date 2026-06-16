@@ -431,9 +431,16 @@ app.whenReady().then(() => {
   avataraIntegration.init(__dirname);
 
   // ============================================================
-  // WebSearch 搜索引擎初始化
+  // WebSearch 搜索引擎初始化 — Brave Search API
   // ============================================================
-  webSearch = new WebSearch(DATA_DIR);
+  const searchConfig = (() => {
+    try {
+      const p = path.join(DATA_DIR, 'search-config.json');
+      if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+    } catch (e) { /* ignore */ }
+    return {};
+  })();
+  webSearch = new WebSearch(DATA_DIR, searchConfig.braveApiKey || '');
 
   // ============================================================
   // 内容抓取器初始化（依赖人格调度器 + 搜索引擎）
