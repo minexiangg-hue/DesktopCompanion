@@ -440,7 +440,7 @@ app.whenReady().then(() => {
     } catch (e) { /* ignore */ }
     return {};
   })();
-  webSearch = new WebSearch(DATA_DIR, searchConfig.braveApiKey || '');
+  webSearch = new WebSearch(DATA_DIR, searchConfig.braveApiKey || '', searchConfig.tavilyApiKey || '');
 
   // ============================================================
   // 内容抓取器初始化（依赖人格调度器 + 搜索引擎）
